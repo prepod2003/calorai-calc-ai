@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Калькулятор КБЖУ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Basic animation for fade-in effect */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+                
+        /* Responsive container */
+        .responsive-container {
+            width: 100%;
+            max-width: 100vw;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+                
+        @media (min-width: 640px) {
+            .responsive-container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+                
+        @media (min-width: 1024px) {
+            .responsive-container {
+                padding-left: 2rem;
+                padding-right: 2rem;
+                max-width: 1200px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-slate-100 overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import { GoogleGenAI, Type } from "https://aistudiocdn.com/@google/genai@^1.20.0";
+
+        const { useState, useMemo, useCallback, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
+
+        // --- UI Icons ---
+        const SearchIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+        const PlusCircleIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+        const TrashIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        );
+        const SpinnerIcon = () => (
+            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        );
+        const PhotoIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        );
+        const SaveIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586L7.707 10.293zM5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5z" />
+            </svg>
+        );
+        const SettingsIcon = () => (
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+        const CloseIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+
+
+        // --- Gemini Service ---
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+        
+        const ingredientsSchema = {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING },
+                    weight: { type: Type.NUMBER },
+                    baseCPFC: {
+                        type: Type.OBJECT,
+                        properties: {
+                            calories: { type: Type.NUMBER }, protein: { type: Type.NUMBER },
+                            fat: { type: Type.NUMBER }, carbohydrate: { type: Type.NUMBER },
+                            fiber: { type: Type.NUMBER }
+                        },
+                        required: ["calories", "protein", "fat", "carbohydrate", "fiber"]
+                    }
+                },
+                required: ["name", "weight", "baseCPFC"]
+            }
+        };
+
+        const fetchIngredientData = async (ingredientName, apiKey) => {
+            if (!apiKey) return null;
+            try {
+                const ai = new GoogleGenAI({ apiKey });
+                const cpfcSchema = {
+                    type: Type.OBJECT,
+                    properties: {
+                        calories: { type: Type.NUMBER }, protein: { type: Type.NUMBER },
+                        fat: { type: Type.NUMBER }, carbohydrate: { type: Type.NUMBER },
+                        fiber: { type: Type.NUMBER }
+                    },
+                    required: ["calories", "protein", "fat", "carbohydrate", "fiber"]
+                };
+                const result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: `Для продукта '${ingredientName}' предоставь точное КБЖУК (калории, белки, жиры, углеводы, клетчатка) на 100 грамм. Ответ дай только в формате JSON.`,
+                    config: { responseMimeType: "application/json", responseSchema: cpfcSchema }
+                });
+                const data = JSON.parse(result.text.trim());
+                if (typeof data.calories === 'number' && typeof data.protein === 'number') return data;
+                return null;
+            } catch (error) { console.error(`Error fetching data for ${ingredientName}:`, error); return null; }
+        };
+
+        const analyzeTextWithGemini = async (text, apiKey, calculatePer100g = false) => {
+            if (!apiKey || !text) return null;
+            try {
+                const ai = new GoogleGenAI({ apiKey });
+
+                let weightInstruction = `Определи вес каждого ингредиента в граммах, следуя правилам:
+1. Если в тексте указан ОБЩИЙ вес блюда (например, "гуляш 200г"), распредели этот общий вес пропорционально между всеми определенными ингредиентами. Сумма весов всех ингредиентов должна быть равна указанному общему весу.
+2. Если в тексте указаны КОНКРЕТНЫЕ веса для каждого ингредиента (например, "картофель 80г, мясо 70г"), используй именно эти веса.
+3. Если вес не указан ни в каком виде, оцени вес каждого ингредиента самостоятельно.`;
+
+                if (calculatePer100g) {
+                    weightInstruction = `Для КАЖДОГО определенного ингредиента установи вес РОВНО 100 грамм. Игнорируй любые упоминания веса в тексте. В поле 'weight' для каждого ингредиента должно быть число 100.`;
+                }
+
+                const prompt = `Проанализируй этот текст с описанием блюда: "${text}".
+Определи все ингредиенты и для каждого предоставь КБЖУК (калории, белки, жиры, углеводы, клетчатка) на 100 грамм.
+${weightInstruction}
+Ответ дай только в формате JSON в виде массива объектов. Важно: название каждого ингредиента в поле 'name' должно быть на русском языке.`;
+                
+                const result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                    config: { responseMimeType: "application/json", responseSchema: ingredientsSchema }
+                });
+                return JSON.parse(result.text.trim());
+            } catch (error) { console.error("Error analyzing text:", error); return null; }
+        };
+
+        const analyzeImageWithGemini = async (imageFile, userHint, apiKey, calculatePer100g = false) => {
+            if (!apiKey) return null;
+            try {
+                const ai = new GoogleGenAI({ apiKey });
+                const base64Data = await fileToBase64(imageFile);
+                const imagePart = { inlineData: { mimeType: imageFile.type, data: base64Data } };
+                
+                let promptText = `Проанализируй это изображение блюда и определи все ингредиенты. Для каждого ингредиента предоставь КБЖУК (калории, белки, жиры, углеводы, клетчатка) на 100 грамм.`;
+                
+                if (calculatePer100g) {
+                    promptText += `\n\nДля КАЖДОГО определенного ингредиента установи вес РОВНО 100 грамм. Игнорируй любые упоминания веса в подсказке пользователя. В поле 'weight' для каждого ингредиента должно быть число 100.`;
+                } else if (userHint && userHint.trim()) {
+                    promptText += `\n\nПользователь предоставил следующую подсказку: "${userHint.trim()}".`;
+                    promptText += `\n\nИспользуй подсказку для определения веса каждого ингредиента в граммах, следуя этим правилам:
+1. Если в подсказке указан ОБЩИЙ вес блюда (например, "гуляш 200г"), распредели этот общий вес пропорционально между всеми ингредиентами, которые ты видишь на фото. Сумма весов всех ингредиентов должна быть равна указанному общему весу.
+2. Если в подсказке указаны КОНКРЕТНЫЕ веса для каждого ингредиента (например, "картофель 80г, мясо 70г"), используй именно эти веса.
+3. Если в подсказке вес не указан, оцени вес каждого ингредиента на фото самостоятельно.`;
+                } else {
+                    promptText += `\n\nОцени вес каждого ингредиента в граммах самостоятельно, исходя из изображения.`;
+                }
+
+                promptText += `\n\nОтвет дай только в формате JSON в виде массива объектов. Важно: название каждого ингредиента в поле 'name' должно быть на русском языке.`;
+                
+                const textPart = { text: promptText };
+
+                const result = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: { parts: [imagePart, textPart] },
+                    config: { responseMimeType: "application/json", responseSchema: ingredientsSchema }
+                });
+                return JSON.parse(result.text.trim());
+            } catch (error) { console.error("Error analyzing image:", error); return null; }
+        };
+
+        // --- Components ---
+        const MealAnalyzer = ({ onAnalysisComplete, apiKey, calculatePer100g, onCalculatePer100gChange }) => {
+            const [text, setText] = useState('');
+            const [image, setImage] = useState(null); // { file, previewUrl }
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const fileInputRef = useRef(null);
+
+            const handleFileSelect = () => { setError(null); fileInputRef.current.click(); };
+
+            const handleImageChange = (event) => {
+                const file = event.target.files[0];
+                if (file) { setImage({ file, previewUrl: URL.createObjectURL(file) }); }
+            };
+
+            const handleAnalyze = async () => {
+                if (isLoading || (!image && !text.trim())) return;
+                setIsLoading(true);
+                setError(null);
+                
+                let result;
+                if (image) {
+                    result = await analyzeImageWithGemini(image.file, text, apiKey, calculatePer100g);
+                } else {
+                    result = await analyzeTextWithGemini(text, apiKey, calculatePer100g);
+                }
+                
+                setIsLoading(false);
+                if (result && Array.isArray(result) && result.length > 0) {
+                    onAnalysisComplete(result);
+                    setText('');
+                    handleClearImage();
+                } else {
+                    setError("Не удалось распознать. Попробуйте уточнить запрос или загрузить другое фото.");
+                }
+            };
+
+            const handleClearImage = () => {
+                if (image) URL.revokeObjectURL(image.previewUrl);
+                setImage(null);
+                if (fileInputRef.current) fileInputRef.current.value = null;
+            };
+
+            return (
+                <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg shadow-md w-full">
+                    <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-2 break-words">Анализ блюда</h2>
+                     <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Опишите блюдо для анализа или добавьте подсказку к фото."
+                        className="w-full p-2 text-base border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 transition resize-none mb-2"
+                        rows="3"
+                        disabled={isLoading}
+                    ></textarea>
+                    
+                    <div className="flex items-center my-2">
+                        <input
+                            type="checkbox"
+                            id="calculatePer100g"
+                            checked={calculatePer100g}
+                            onChange={(e) => onCalculatePer100gChange(e.target.checked)}
+                            className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                            disabled={isLoading}
+                        />
+                        <label htmlFor="calculatePer100g" className="ml-2 block text-sm text-slate-700">
+                            Расчёт на 100 г (игнорировать вес)
+                        </label>
+                    </div>
+
+                    {image && (
+                        <div className="space-y-2 animate-fade-in mb-2">
+                            <img src={image.previewUrl} alt="Превью блюда" className="w-full max-h-40 object-contain rounded-md border" />
+                            <button onClick={handleClearImage} className="w-full bg-slate-200 text-slate-800 font-bold py-2 px-4 rounded-md hover:bg-slate-300 transition text-sm">
+                                Убрать фото
+                            </button>
+                        </div>
+                    )}
+
+                     <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageChange} className="hidden" aria-hidden="true" />
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                        <button onClick={handleFileSelect} disabled={isLoading} className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-md transition border-2 border-dashed border-slate-300 disabled:bg-slate-400 text-sm">
+                            <PhotoIcon />
+                            <span>{image ? 'Изменить фото' : 'Загрузить фото'}</span>
+                        </button>
+                        <button onClick={handleAnalyze} disabled={isLoading || (!image && !text.trim())} className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-slate-400 transition text-sm">
+                            {isLoading ? <SpinnerIcon /> : null}
+                            <span>Проанализировать</span>
+                        </button>
+                    </div>
+
+                    {error && <p className="text-red-600 bg-red-100 p-2 sm:p-3 rounded-lg text-xs sm:text-sm mt-2">{error}</p>}
+                </div>
+            );
+        };
+
+        const IngredientSearch = ({ onAddIngredient, apiKey }) => {
+            const [query, setQuery] = useState('');
+            const [result, setResult] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            const handleSearch = useCallback(async (event) => {
+                event.preventDefault();
+                if (!query.trim()) return;
+
+                setIsLoading(true);
+                setError(null);
+                setResult(null);
+
+                const data = await fetchIngredientData(query, apiKey);
+
+                if (data) {
+                    setResult({ name: query, cpfc: data });
+                } else {
+                    setError(`Не удалось найти данные для "${query}". Попробуйте другой запрос.`);
+                }
+                setIsLoading(false);
+            }, [query, apiKey]);
+
+            const handleAdd = () => {
+                if (result) {
+                    onAddIngredient({
+                        id: crypto.randomUUID(),
+                        name: result.name,
+                        baseCPFC: result.cpfc
+                    });
+                    setQuery('');
+                    setResult(null);
+                }
+            };
+
+            return (
+                <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg shadow-md w-full">
+                    <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-2 break-words">Ручной поиск</h2>
+                    <form onSubmit={handleSearch} className="w-full">
+                        <div className="flex w-full">
+                            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Например, куриная грудка" className="flex-grow w-full min-w-0 p-2 text-base border border-r-0 border-slate-300 rounded-l-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition focus:z-10" disabled={isLoading} />
+                            <button type="submit" className="bg-blue-600 text-white p-2 rounded-r-md hover:bg-blue-700 disabled:bg-slate-400 transition-colors flex items-center justify-center w-10 sm:w-12 flex-shrink-0" disabled={isLoading || !query.trim()}>
+                                {isLoading ? <SpinnerIcon /> : <SearchIcon />}
+                            </button>
+                        </div>
+                    </form>
+                    <div className="mt-2 sm:mt-3">
+                        {error && <p className="text-red-600 bg-red-100 p-2 sm:p-3 rounded-lg text-xs sm:text-sm">{error}</p>}
+                        {result && (
+                            <div className="bg-slate-50 p-2 sm:p-3 lg:p-4 rounded-lg border border-slate-200 animate-fade-in w-full">
+                                <div className="flex justify-between items-start gap-2 mb-2">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-sm sm:text-base lg:text-lg capitalize break-words">{result.name}</h3>
+                                        <p className="text-xs sm:text-sm text-slate-500">КБЖУК на 100г:</p>
+                                    </div>
+                                    <button onClick={handleAdd} className="flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 font-semibold transition-colors text-xs sm:text-sm lg:text-base self-start sm:self-auto flex-shrink-0">
+                                        <PlusCircleIcon />Добавить
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-5 gap-1 sm:gap-2 text-center w-full">
+                                    <div className="bg-white p-1 sm:p-1.5 lg:p-2 rounded"><p className="text-slate-500 text-xs">Кал</p><p className="font-bold text-blue-600 text-sm break-words">{result.cpfc.calories.toFixed(0)}</p></div>
+                                    <div className="bg-white p-1 sm:p-1.5 lg:p-2 rounded"><p className="text-slate-500 text-xs">Б</p><p className="font-bold text-green-600 text-sm break-words">{result.cpfc.protein.toFixed(1)}</p></div>
+                                    <div className="bg-white p-1 sm:p-1.5 lg:p-2 rounded"><p className="text-slate-500 text-xs">Ж</p><p className="font-bold text-orange-600 text-sm break-words">{result.cpfc.fat.toFixed(1)}</p></div>
+                                    <div className="bg-white p-1 sm:p-1.5 lg:p-2 rounded"><p className="text-slate-500 text-xs">У</p><p className="font-bold text-purple-600 text-sm break-words">{result.cpfc.carbohydrate.toFixed(1)}</p></div>
+                                    <div className="bg-white p-1 sm:p-1.5 lg:p-2 rounded"><p className="text-slate-500 text-xs">Кл</p><p className="font-bold text-cyan-600 text-sm break-words">{result.cpfc.fiber.toFixed(1)}</p></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const NutritionLabel = ({label, value, unit, color, precision = 1}) => (
+            <div className={`p-1.5 sm:p-2 lg:p-3 rounded-md text-center w-full ${color}`}>
+                <p className="text-xs sm:text-sm font-medium opacity-80 break-words">{label}</p>
+                <p className="text-sm sm:text-base font-bold break-words">{value.toFixed(precision)} <span className="text-xs font-normal">{unit}</span></p>
+            </div>
+        );
+
+        const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, onSave }) => {
+            const [mealType, setMealType] = useState('lunch');
+
+            const handleSave = () => {
+                onSave(mealType, ingredients);
+            };
+
+            return (
+                <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg shadow-md w-full">
+                    <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-base sm:text-lg lg:text-xl font-bold break-words flex-1 min-w-0">Текущее блюдо</h2>
+                        {ingredients.length > 0 && <button onClick={onClear} className="text-xs sm:text-sm text-red-600 hover:text-red-800 font-semibold transition-colors flex-shrink-0 ml-2">Очистить</button>}
+                    </div>
+                    <div className="space-y-2 mb-2 sm:mb-3 max-h-96 overflow-y-auto">
+                        {ingredients.length === 0 ? (
+                            <div className="text-center py-4 sm:py-6 text-slate-500 bg-slate-50 rounded-lg text-sm w-full"><p>Добавьте ингредиенты</p></div>
+                        ) : (
+                            ingredients.map(item => (
+                                <div key={item.id} className="p-2 sm:p-3 bg-slate-50 rounded-md animate-fade-in w-full">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
+                                        <div className="flex-1 min-w-0 w-full sm:w-auto">
+                                            <p className="font-semibold text-sm capitalize break-words">{item.name}</p>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600 mt-1">
+                                                <span>К:{(item.baseCPFC.calories * item.weight / 100).toFixed(0)}</span>
+                                                <span>Б:{(item.baseCPFC.protein * item.weight / 100).toFixed(1)}</span>
+                                                <span>Ж:{(item.baseCPFC.fat * item.weight / 100).toFixed(1)}</span>
+                                                <span>У:{(item.baseCPFC.carbohydrate * item.weight / 100).toFixed(1)}</span>
+                                                <span>Кл:{(item.baseCPFC.fiber * item.weight / 100).toFixed(1)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                            <input type="number" value={item.weight} onChange={(e) => onUpdateWeight(item.id, parseInt(e.target.value, 10))} className="w-20 p-1 sm:p-2 border border-slate-300 rounded text-center text-base" min="0" />
+                                            <span className="text-slate-500 text-sm">г</span>
+                                            <button onClick={() => onRemove(item.id)} className="text-slate-400 hover:text-red-600 p-1 rounded transition-colors ml-1"><TrashIcon /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    {ingredients.length > 0 && <div className="border-t pt-2 sm:pt-3 w-full">
+                        <h3 className="text-lg font-bold mb-2 break-words">Итого на блюдо:</h3>
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                            <NutritionLabel label="Калории" value={totals.calories} unit="ккал" color="bg-blue-100 text-blue-800" precision={0} />
+                            <NutritionLabel label="Белки" value={totals.protein} unit="г" color="bg-green-100 text-green-800" />
+                            <NutritionLabel label="Жиры" value={totals.fat} unit="г" color="bg-orange-100 text-orange-800" />
+                            <NutritionLabel label="Углеводы" value={totals.carbohydrate} unit="г" color="bg-purple-100 text-purple-800" />
+                            <NutritionLabel label="Клетчатка" value={totals.fiber} unit="г" color="bg-cyan-100 text-cyan-800" />
+                            <NutritionLabel label="Общий вес" value={totals.weight} unit="г" color="bg-slate-100 text-slate-800" precision={0} />
+                        </div>
+                         <div className="mt-4">
+                            <h3 className="text-base font-bold mb-2">Сохранить как:</h3>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <select value={mealType} onChange={e => setMealType(e.target.value)} className="flex-1 p-2 border border-slate-300 rounded-md bg-white text-base">
+                                    <option value="breakfast">Завтрак</option>
+                                    <option value="lunch">Обед</option>
+                                    <option value="dinner">Ужин</option>
+                                    <option value="snack">Перекус</option>
+                                </select>
+                                <button onClick={handleSave} className="flex items-center justify-center gap-1 bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition text-base">
+                                    <SaveIcon /> Сохранить
+                                </button>
+                            </div>
+                        </div>
+                    </div>}
+                </div>
+            );
+        };
+
+        const HistoryView = ({ history, onRemoveMeal, onClearDay }) => {
+            const mealLabels = { breakfast: 'Завтрак', lunch: 'Обед', dinner: 'Ужин', snack: 'Перекус' };
+            const sortedDates = Object.keys(history).sort((a, b) => new Date(b) - new Date(a));
+
+            if (sortedDates.length === 0) {
+                return (
+                     <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md w-full text-center">
+                        <h2 className="text-lg font-semibold text-slate-700">История пуста</h2>
+                        <p className="text-slate-500 mt-2 text-sm">Сохраненные блюда появятся здесь.</p>
+                    </div>
+                )
+            }
+
+            return (
+                <div className="space-y-4 w-full">
+                    {sortedDates.map(date => {
+                        const dayData = history[date];
+                        const totals = dayData.dailyTotals;
+                        return (
+                            <div key={date} className="bg-white p-3 sm:p-4 rounded-lg shadow-md animate-fade-in">
+                                <div className="flex justify-between items-center mb-3 border-b pb-3">
+                                    <h2 className="text-lg sm:text-xl font-bold">{new Date(date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                                    <button onClick={() => onClearDay(date)} className="text-red-500 hover:text-red-700 text-xs font-semibold">Очистить день</button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                    <NutritionLabel label="Калории" value={totals.calories} unit="ккал" color="bg-blue-100 text-blue-800" precision={0} />
+                                    <NutritionLabel label="Белки" value={totals.protein} unit="г" color="bg-green-100 text-green-800" />
+                                    <NutritionLabel label="Жиры" value={totals.fat} unit="г" color="bg-orange-100 text-orange-800" />
+                                    <NutritionLabel label="Углеводы" value={totals.carbohydrate} unit="г" color="bg-purple-100 text-purple-800" />
+                                    <NutritionLabel label="Клетчатка" value={totals.fiber} unit="г" color="bg-cyan-100 text-cyan-800" />
+                                    <NutritionLabel label="Общий вес" value={totals.weight} unit="г" color="bg-slate-100 text-slate-800" precision={0} />
+                                </div>
+                                <div className="space-y-3">
+                                    {Object.entries(dayData.meals).map(([mealId, meal]) => (
+                                        <div key={mealId} className="bg-slate-50 p-2 sm:p-3 rounded-md">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="font-bold text-base capitalize">{mealLabels[meal.type] || meal.type}</h3>
+                                                <button onClick={() => onRemoveMeal(date, mealId)} className="p-1 text-slate-400 hover:text-red-600"><TrashIcon /></button>
+                                            </div>
+                                            <ul className="text-sm space-y-2">
+                                                {meal.ingredients.map(ing => (
+                                                    <li key={ing.id} className="border-t border-slate-200 pt-2 mt-2 first:border-t-0 first:pt-0 first:mt-0">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold capitalize break-words">{ing.name}</span>
+                                                            <span className="font-semibold flex-shrink-0 ml-2">{ing.weight}г</span>
+                                                        </div>
+                                                        <div className="text-xs text-slate-600 flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                                                            <span>К: {(ing.baseCPFC.calories * ing.weight / 100).toFixed(0)}</span>
+                                                            <span>Б: {(ing.baseCPFC.protein * ing.weight / 100).toFixed(1)}</span>
+                                                            <span>Ж: {(ing.baseCPFC.fat * ing.weight / 100).toFixed(1)}</span>
+                                                            <span>У: {(ing.baseCPFC.carbohydrate * ing.weight / 100).toFixed(1)}</span>
+                                                            <span>Кл: {(ing.baseCPFC.fiber * ing.weight / 100).toFixed(1)}</span>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            );
+        };
+        
+        const ApiKeyManager = ({ apiKey, setApiKey, isOpen, onClose }) => {
+            const [tempKey, setTempKey] = useState('');
+
+            useEffect(() => {
+                if (isOpen) {
+                    setTempKey(apiKey || '');
+                }
+            }, [isOpen, apiKey]);
+
+            const handleSave = () => {
+                if (!tempKey.trim()) return;
+                localStorage.setItem('gemini-api-key', tempKey);
+                setApiKey(tempKey);
+                onClose();
+            };
+
+            const handleClear = () => {
+                localStorage.removeItem('gemini-api-key');
+                setApiKey(null);
+                setTempKey('');
+            };
+            
+            if (!isOpen) {
+                return null;
+            }
+
+            return (
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-2xl w-full max-w-md relative">
+                        {apiKey && (
+                             <button onClick={onClose} className="absolute top-2 right-2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors" aria-label="Закрыть">
+                                <CloseIcon />
+                            </button>
+                        )}
+                        <h2 className="text-xl font-bold mb-2">Настройки API ключа</h2>
+                        <p className="text-slate-600 mb-4 text-sm">
+                           {apiKey ? "Ваш API ключ сохранен в браузере." : "Пожалуйста, введите ваш Google Gemini API ключ, чтобы начать."}
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                           <input type="password" value={tempKey} onChange={(e) => setTempKey(e.target.value)} placeholder="Введите ваш API ключ..." className="flex-1 p-2 text-base border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 w-full" />
+                            <button onClick={handleSave} disabled={!tempKey.trim()} className="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-slate-400 transition text-base">Сохранить</button>
+                        </div>
+                         <p className="text-xs text-slate-500 mt-3">Вы можете получить ключ в <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a>.</p>
+                         {apiKey && <button onClick={handleClear} className="w-full mt-4 text-sm text-red-600 hover:text-red-800 text-center font-semibold py-2 rounded-md hover:bg-red-50 transition">Очистить ключ</button>}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [apiKey, setApiKey] = useState(null);
+            const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+            const [dishIngredients, setDishIngredients] = useState([]);
+            const [history, setHistory] = useState({});
+            const [activeView, setActiveView] = useState('builder'); // 'builder' or 'history'
+            const [calculatePer100g, setCalculatePer100g] = useState(false);
+
+
+            useEffect(() => {
+                const storedKey = localStorage.getItem('gemini-api-key');
+                if (storedKey) setApiKey(storedKey);
+                const storedHistory = localStorage.getItem('meal-history');
+                if (storedHistory) setHistory(JSON.parse(storedHistory));
+            }, []);
+            
+            useEffect(() => {
+                if (Object.keys(history).length > 0) {
+                    localStorage.setItem('meal-history', JSON.stringify(history));
+                } else {
+                    // If history becomes empty, remove it from localStorage
+                    if(localStorage.getItem('meal-history')) {
+                         localStorage.removeItem('meal-history');
+                    }
+                }
+            }, [history]);
+
+            const handleAddIngredient = (ingredient) => {
+                setDishIngredients(prev => [...prev, { ...ingredient, weight: 100 }]);
+            };
+            
+            const handleAnalysisComplete = (analyzedIngredients) => {
+                const newIngredients = analyzedIngredients.map(ing => ({
+                    id: crypto.randomUUID(),
+                    name: ing.name,
+                    weight: Math.round(ing.weight) || 100,
+                    baseCPFC: ing.baseCPFC
+                }));
+                setDishIngredients(prev => [...prev, ...newIngredients]);
+                setCalculatePer100g(false); // Reset checkbox after analysis
+            };
+            
+            const handleCalculatePer100gChange = (isChecked) => {
+                setCalculatePer100g(isChecked);
+                if (isChecked && dishIngredients.length > 0) {
+                    setDishIngredients(prev => prev.map(item => ({ ...item, weight: 100 })));
+                }
+            };
+
+            const handleUpdateIngredientWeight = (id, weight) => {
+                setDishIngredients(prev => prev.map(item => item.id === id ? { ...item, weight: isNaN(weight) ? 0 : weight } : item));
+            };
+
+            const handleRemoveIngredient = (id) => setDishIngredients(prev => prev.filter(item => item.id !== id));
+            const handleClearDish = () => setDishIngredients([]);
+
+            const handleSaveDish = (mealType, ingredients) => {
+                const today = new Date().toISOString().split('T')[0];
+                const mealId = crypto.randomUUID();
+
+                setHistory(prev => {
+                    const newHistory = JSON.parse(JSON.stringify(prev)); // Deep copy
+                    const dayData = newHistory[today] || { meals: {}, dailyTotals: { calories: 0, protein: 0, fat: 0, carbohydrate: 0, fiber: 0, weight: 0 } };
+                    
+                    dayData.meals[mealId] = { type: mealType, ingredients: ingredients };
+
+                    const allMealsToday = Object.values(dayData.meals).flatMap(m => m.ingredients);
+                    dayData.dailyTotals = calculateTotals(allMealsToday);
+
+                    newHistory[today] = dayData;
+                    return newHistory;
+                });
+                handleClearDish();
+            };
+
+            const handleRemoveMeal = (date, mealId) => {
+                 setHistory(prev => {
+                    const newHistory = JSON.parse(JSON.stringify(prev));
+                    if (!newHistory[date]) return newHistory;
+                    
+                    delete newHistory[date].meals[mealId];
+
+                    if(Object.keys(newHistory[date].meals).length === 0) {
+                        delete newHistory[date];
+                    } else {
+                        const allMealsToday = Object.values(newHistory[date].meals).flatMap(m => m.ingredients);
+                        newHistory[date].dailyTotals = calculateTotals(allMealsToday);
+                    }
+                    return newHistory;
+                 });
+            };
+            
+            const handleClearDay = (date) => {
+                setHistory(prev => {
+                    const newHistory = { ...prev };
+                    delete newHistory[date];
+                    return newHistory;
+                });
+            };
+
+            const calculateTotals = (ingredientsList) => {
+                 return ingredientsList.reduce((totals, item) => {
+                    const ratio = (item.weight || 0) / 100;
+                    totals.calories += (item.baseCPFC.calories || 0) * ratio;
+                    totals.protein += (item.baseCPFC.protein || 0) * ratio;
+                    totals.fat += (item.baseCPFC.fat || 0) * ratio;
+                    totals.carbohydrate += (item.baseCPFC.carbohydrate || 0) * ratio;
+                    totals.fiber += (item.baseCPFC.fiber || 0) * ratio;
+                    totals.weight += (item.weight || 0);
+                    return totals;
+                }, { calories: 0, protein: 0, fat: 0, carbohydrate: 0, fiber: 0, weight: 0 });
+            };
+            
+            const memoizedTotals = useMemo(() => calculateTotals(dishIngredients), [dishIngredients]);
+
+            const isReady = !!apiKey;
+
+            const MainTabButton = ({ isActive, onClick, children, badge }) => (
+                <button onClick={onClick} className={`relative flex-1 py-3 px-1 text-sm sm:text-base font-bold text-center transition-colors ${isActive ? 'text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}>
+                    {children}
+                    <span className={`absolute bottom-0 left-0 right-0 h-1 transition-transform ${isActive ? 'bg-blue-600' : 'bg-transparent'}`}></span>
+                    {badge > 0 && <span className="absolute top-1 right-2 ml-2 bg-blue-100 text-blue-800 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{badge}</span>}
+                </button>
+            );
+
+            return (
+                <div className="min-h-screen bg-slate-100 text-slate-800 font-sans">
+                    <ApiKeyManager 
+                        apiKey={apiKey} 
+                        setApiKey={setApiKey} 
+                        isOpen={!apiKey || isApiModalOpen} 
+                        onClose={() => setIsApiModalOpen(false)} 
+                    />
+                    <header className="bg-white shadow-md w-full sticky top-0 z-10">
+                        <div className="responsive-container py-2 flex justify-between items-center">
+                            <h1 className="text-xl lg:text-2xl font-bold text-slate-900">Калькулятор КБЖУ</h1>
+                            {isReady && (
+                                <button onClick={() => setIsApiModalOpen(true)} className="text-slate-500 hover:text-blue-600 p-2 rounded-full hover:bg-slate-100 transition-colors" aria-label="Настройки">
+                                    <SettingsIcon />
+                                </button>
+                            )}
+                        </div>
+                        {isReady && <div className="flex border-t border-slate-200">
+                            <MainTabButton isActive={activeView === 'builder'} onClick={() => setActiveView('builder')} badge={dishIngredients.length}>Конструктор</MainTabButton>
+                            <MainTabButton isActive={activeView === 'history'} onClick={() => setActiveView('history')}>История</MainTabButton>
+                        </div>}
+                    </header>
+                    
+                    {isReady ? (
+                        <main className="w-full mt-2 sm:mt-4 animate-fade-in pb-4">
+                            <div className="responsive-container">
+                                {activeView === 'builder' && (
+                                    <div className="grid lg:grid-cols-2 lg:gap-4 lg:items-start space-y-4 lg:space-y-0">
+                                        <div className="space-y-4">
+                                            <MealAnalyzer 
+                                                onAnalysisComplete={handleAnalysisComplete} 
+                                                apiKey={apiKey} 
+                                                calculatePer100g={calculatePer100g}
+                                                onCalculatePer100gChange={handleCalculatePer100gChange}
+                                            />
+                                            <IngredientSearch onAddIngredient={handleAddIngredient} apiKey={apiKey} />
+                                        </div>
+                                        <DishBuilder ingredients={dishIngredients} totals={memoizedTotals} onUpdateWeight={handleUpdateIngredientWeight} onRemove={handleRemoveIngredient} onClear={handleClearDish} onSave={handleSaveDish} />
+                                    </div>
+                                )}
+                                {activeView === 'history' && <HistoryView history={history} onRemoveMeal={handleRemoveMeal} onClearDay={handleClearDay} />}
+                            </div>
+                        </main>
+                    ) : (
+                         <main className="w-full mt-2 text-center">
+                            <div className="responsive-container">
+                                <div className="bg-white p-6 rounded-lg shadow-md w-full">
+                                    <h2 className="text-xl font-semibold text-slate-700">Ожидание API ключа...</h2>
+                                    <p className="text-slate-500 mt-2">Пожалуйста, введите ваш ключ, чтобы начать.</p>
+                                </div>
+                            </div>
+                        </main>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Mount Application ---
+        const rootElement = document.getElementById('root');
+        const root = createRoot(rootElement);
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
