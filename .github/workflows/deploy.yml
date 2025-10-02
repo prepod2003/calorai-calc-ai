@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ] # Запускать при пуше в ветку main
 
+# Добавляем права для workflow
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
