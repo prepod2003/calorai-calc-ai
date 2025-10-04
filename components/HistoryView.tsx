@@ -10,21 +10,53 @@ const NutritionLabel = ({
     value, 
     unit, 
     color, 
-    precision = 1 
+    precision = 1,
+    percentage,
+    goal
 }: { 
     label: string; 
     value: number; 
     unit: string; 
     color: string; 
     precision?: number;
-}) => (
-    <div className={`p-1.5 sm:p-2 lg:p-3 rounded-md text-center w-full ${color}`}>
-        <p className="text-xs sm:text-sm font-medium opacity-80 break-words">{label}</p>
-        <p className="text-sm sm:text-base font-bold break-words">
-            {value.toFixed(precision)} <span className="text-xs font-normal">{unit}</span>
-        </p>
-    </div>
-);
+    percentage?: number;
+    goal?: number;
+}) => {
+    const isOverLimit = percentage !== undefined && percentage >= 110;
+    const baseColor = color.match(/(blue|green|orange|purple|cyan)/)?.[1] || 'slate';
+    const progressBgColor = isOverLimit ? 'bg-red-100' : `bg-${baseColor}-50`;
+    const progressBarColor = isOverLimit ? 'bg-red-500' : `bg-${baseColor}-400`;
+    const progressTextColor = isOverLimit ? 'text-white font-bold' : `text-${baseColor}-700 font-semibold`;
+    const displayPercentage = Math.min(percentage || 0, 100);
+    
+    return (
+        <div className="w-full">
+            <div className={`p-1.5 sm:p-2 lg:p-3 rounded-md text-center ${color}`}>
+                <p className="text-xs sm:text-sm font-medium opacity-80 break-words">{label}</p>
+                <p className="text-sm sm:text-base font-bold break-words">
+                    {value.toFixed(precision)} <span className="text-xs font-normal">{unit}</span>
+                </p>
+            </div>
+            {percentage !== undefined && goal !== undefined && (
+                <div className="mt-1 px-1">
+                    <div className={`relative h-4 ${progressBgColor} rounded-full overflow-hidden`}>
+                        <div 
+                            className={`h-full ${progressBarColor} transition-all duration-300 flex items-center justify-center`}
+                            style={{ width: `${displayPercentage}%` }}
+                        >
+                            <span className={`text-[10px] sm:text-xs ${progressTextColor} font-semibold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
+                                {percentage}%
+                            </span>
+                        </div>
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-slate-400 text-center mt-0.5">
+                        из {goal.toFixed(precision)} {unit}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};
 
 interface HistoryViewProps {
     history: History;
@@ -42,6 +74,13 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+    // Диагностический вывод в консоль
+    console.log('🔍 HistoryView диагностика:', {
+        'Профиль пользователя': userProfile ? 'Настроен ✅' : 'НЕ настроен ❌',
+        'Дневные цели': userProfile?.dailyGoals ? 'Есть ✅' : 'Отсутствуют ❌',
+        'Количество дней в истории': Object.keys(history).length
+    });
 
     const filteredDates = useMemo(() => {
         let dates = Object.keys(history);
@@ -194,6 +233,16 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                 filteredDates.map(date => {
                     const dayData = history[date];
                     const totals = dayData.dailyTotals;
+                    const progress = dayData.progressPercentages;
+                    const goals = userProfile?.dailyGoals;
+                    
+                    // Диагностика для каждого дня
+                    console.log(`📅 День ${date}:`, {
+                        'Есть progressPercentages': progress ? 'Да ✅' : 'НЕТ ❌',
+                        'Есть goals': goals ? 'Да ✅' : 'НЕТ ❌',
+                        'Проценты': progress,
+                        'Цели': goals
+                    });
                     
                     return (
                         <div key={date} className="bg-white p-3 sm:p-4 rounded-lg shadow-md animate-fade-in">
@@ -225,30 +274,40 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                                     unit="ккал" 
                                     color="bg-blue-100 text-blue-800" 
                                     precision={0} 
+                                    percentage={progress?.calories}
+                                    goal={goals?.targetCalories}
                                 />
                                 <NutritionLabel 
                                     label="Белки" 
                                     value={totals.protein} 
                                     unit="г" 
                                     color="bg-green-100 text-green-800" 
+                                    percentage={progress?.protein}
+                                    goal={goals?.protein}
                                 />
                                 <NutritionLabel 
                                     label="Жиры" 
                                     value={totals.fat} 
                                     unit="г" 
                                     color="bg-orange-100 text-orange-800" 
+                                    percentage={progress?.fat}
+                                    goal={goals?.fat}
                                 />
                                 <NutritionLabel 
                                     label="Углеводы" 
                                     value={totals.carbohydrate} 
                                     unit="г" 
                                     color="bg-purple-100 text-purple-800" 
+                                    percentage={progress?.carbohydrate}
+                                    goal={goals?.carbohydrate}
                                 />
                                 <NutritionLabel 
                                     label="Клетчатка" 
                                     value={totals.fiber} 
                                     unit="г" 
                                     color="bg-cyan-100 text-cyan-800" 
+                                    percentage={progress?.fiber}
+                                    goal={goals?.fiber}
                                 />
                                 <NutritionLabel 
                                     label="Общий вес" 

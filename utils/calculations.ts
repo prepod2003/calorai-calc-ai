@@ -85,3 +85,45 @@ export const calculatePer100g = (ingredientsList: Ingredient[]) => {
         fiber: Number((totals.fiber * ratio).toFixed(1)),
     };
 };
+
+/**
+ * Рассчитывает проценты выполнения дневных целей
+ */
+export const calculateProgressPercentages = (
+    dailyTotals: {
+        calories: number;
+        protein: number;
+        fat: number;
+        carbohydrate: number;
+        fiber: number;
+    },
+    dailyGoals: {
+        targetCalories: number;
+        protein: number;
+        fat: number;
+        carbohydrate: number;
+        fiber: number;
+    } | null
+) => {
+    if (!dailyGoals) {
+        return null;
+    }
+
+    return {
+        calories: dailyGoals.targetCalories > 0 
+            ? Math.round((dailyTotals.calories / dailyGoals.targetCalories) * 100) 
+            : 0,
+        protein: dailyGoals.protein > 0 
+            ? Math.round((dailyTotals.protein / dailyGoals.protein) * 100) 
+            : 0,
+        fat: dailyGoals.fat > 0 
+            ? Math.round((dailyTotals.fat / dailyGoals.fat) * 100) 
+            : 0,
+        carbohydrate: dailyGoals.carbohydrate > 0 
+            ? Math.round((dailyTotals.carbohydrate / dailyGoals.carbohydrate) * 100) 
+            : 0,
+        fiber: dailyGoals.fiber > 0 
+            ? Math.round((dailyTotals.fiber / dailyGoals.fiber) * 100) 
+            : 0,
+    };
+};

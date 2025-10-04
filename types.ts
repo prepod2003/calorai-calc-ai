@@ -44,6 +44,13 @@ export interface HistoryEntry {
         fiber: number;
         weight: number;
     };
+    progressPercentages?: {
+        calories: number;
+        protein: number;
+        fat: number;
+        carbohydrate: number;
+        fiber: number;
+    };
 }
 
 export interface History {

@@ -8,7 +8,7 @@ import MyDishes from './components/MyDishes';
 import UserProfile from './components/UserProfile';
 import { Ingredient, ApiConfig, History, SavedDish, UserProfile as UserProfileType } from './types';
 import { DEFAULT_PROVIDER_ID } from './constants/apiProviders';
-import { calculateTotals } from './utils/calculations';
+import { calculateTotals, calculateProgressPercentages } from './utils/calculations';
 import { loadSavedDishes, saveDishToLibrary, updateDishInLibrary, deleteDishFromLibrary } from './utils/savedDishes';
 import { loadUserProfile, saveUserProfile } from './utils/userProfile';
 
@@ -106,6 +106,29 @@ const App = () => {
         }
     }, [history]);
 
+    useEffect(() => {
+        if (userProfile?.dailyGoals) {
+            setHistory(prev => {
+                if (Object.keys(prev).length === 0) return prev;
+                
+                const needsMigration = Object.values(prev).some(dayData => !dayData.progressPercentages);
+                if (!needsMigration) return prev;
+                
+                const migratedHistory: History = {};
+                Object.entries(prev).forEach(([date, dayData]) => {
+                    migratedHistory[date] = {
+                        ...dayData,
+                        progressPercentages: calculateProgressPercentages(
+                            dayData.dailyTotals,
+                            userProfile.dailyGoals || null
+                        ) || undefined
+                    };
+                });
+                return migratedHistory;
+            });
+        }
+    }, [userProfile]);
+
     const handleAddIngredient = (ingredient: Omit<Ingredient, 'weight'>, weight: number = 100) => {
         setDishIngredients(prev => [...prev, { ...ingredient, weight }]);
     };
@@ -161,6 +184,10 @@ const App = () => {
 
             const allMealsToday = Object.values(dayData.meals).flatMap((m: any) => m.ingredients);
             dayData.dailyTotals = calculateTotals(allMealsToday);
+            dayData.progressPercentages = calculateProgressPercentages(
+                dayData.dailyTotals,
+                userProfile?.dailyGoals || null
+            ) || undefined;
 
             newHistory[today] = dayData;
             return newHistory;
@@ -180,6 +207,10 @@ const App = () => {
             } else {
                 const allMealsToday = Object.values(newHistory[date].meals).flatMap((m: any) => m.ingredients);
                 newHistory[date].dailyTotals = calculateTotals(allMealsToday);
+                newHistory[date].progressPercentages = calculateProgressPercentages(
+                    newHistory[date].dailyTotals,
+                    userProfile?.dailyGoals || null
+                ) || undefined;
             }
             return newHistory;
         });

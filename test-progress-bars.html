@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест прогресс-баров</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+        .warning { background: #fef3c7; color: #92400e; }
+        pre {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        h2 { color: #1e293b; }
+        code { background: #e2e8f0; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Диагностика прогресс-баров</h1>
+    
+    <div class="section">
+        <h2>Шаг 1: Проверка данных</h2>
+        <button class="button" onclick="checkData()">Проверить данные в localStorage</button>
+        <div id="dataStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Шаг 2: Создать тестовый профиль</h2>
+        <button class="button" onclick="createTestProfile()">Создать тестовый профиль</button>
+        <div id="profileStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Шаг 3: Добавить progressPercentages в историю</h2>
+        <button class="button" onclick="addProgressToHistory()">Добавить прогресс в историю</button>
+        <div id="historyStatus"></div>
+    </div>
+
+    <div class="section">
+        <h2>Шаг 4: Открыть приложение</h2>
+        <button class="button" onclick="window.location.href='/'">Открыть приложение</button>
+        <p>После выполнения шагов выше, откройте приложение и перейдите во вкладку "История"</p>
+    </div>
+
+    <script>
+        function checkData() {
+            const profile = localStorage.getItem('user-profile');
+            const history = localStorage.getItem('meal-history');
+            
+            let html = '<h3>Результаты проверки:</h3>';
+            
+            // Проверка профиля
+            if (!profile) {
+                html += '<div class="status error">❌ Профиль НЕ найден</div>';
+                html += '<p>Профиль отсутствует. Создайте тестовый профиль кнопкой ниже.</p>';
+            } else {
+                try {
+                    const profileData = JSON.parse(profile);
+                    if (profileData.dailyGoals) {
+                        html += '<div class="status success">✅ Профиль найден с дневными целями</div>';
+                        html += '<pre>' + JSON.stringify(profileData.dailyGoals, null, 2) + '</pre>';
+                    } else {
+                        html += '<div class="status warning">⚠️ Профиль найден, но без дневных целей</div>';
+                    }
+                } catch (e) {
+                    html += '<div class="status error">❌ Ошибка чтения профиля</div>';
+                }
+            }
+            
+            // Проверка истории
+            if (!history) {
+                html += '<div class="status error">❌ История НЕ найдена</div>';
+                html += '<p>История пуста. Добавьте хотя бы одно блюдо в приложении.</p>';
+            } else {
+                try {
+                    const historyData = JSON.parse(history);
+                    const dates = Object.keys(historyData);
+                    html += `<div class="status success">✅ История найдена (${dates.length} дней)</div>`;
+                    
+                    // Проверка progressPercentages
+                    let hasProgress = 0;
+                    dates.forEach(date => {
+                        if (historyData[date].progressPercentages) {
+                            hasProgress++;
+                        }
+                    });
+                    
+                    if (hasProgress === 0) {
+                        html += '<div class="status warning">⚠️ В истории нет progressPercentages</div>';
+                        html += '<p>Выполните Шаг 3 для добавления прогресса.</p>';
+                    } else {
+                        html += `<div class="status success">✅ progressPercentages есть в ${hasProgress} из ${dates.length} дней</div>`;
+                    }
+                } catch (e) {
+                    html += '<div class="status error">❌ Ошибка чтения истории</div>';
+                }
+            }
+            
+            document.getElementById('dataStatus').innerHTML = html;
+        }
+        
+        function createTestProfile() {
+            const testProfile = {
+                name: "Тестовый пользователь",
+                gender: "male",
+                age: 30,
+                weight: 75,
+                height: 175,
+                activityLevel: "moderate",
+                goal: "maintain",
+                dailyGoals: {
+                    bmr: 1700,
+                    tdee: 2350,
+                    targetCalories: 2350,
+                    protein: 120,
+                    fat: 65,
+                    carbohydrate: 290,
+                    fiber: 30
+                }
+            };
+            
+            localStorage.setItem('user-profile', JSON.stringify(testProfile));
+            
+            document.getElementById('profileStatus').innerHTML = `
+                <div class="status success">✅ Тестовый профиль создан!</div>
+                <pre>${JSON.stringify(testProfile.dailyGoals, null, 2)}</pre>
+                <p>Теперь выполните Шаг 3 или просто перезагрузите приложение.</p>
+            `;
+        }
+        
+        function addProgressToHistory() {
+            const history = localStorage.getItem('meal-history');
+            const profile = localStorage.getItem('user-profile');
+            
+            if (!history) {
+                document.getElementById('historyStatus').innerHTML = `
+                    <div class="status error">❌ История не найдена</div>
+                    <p>Сначала добавьте хотя бы одно блюдо в приложении.</p>
+                `;
+                return;
+            }
+            
+            if (!profile) {
+                document.getElementById('historyStatus').innerHTML = `
+                    <div class="status error">❌ Профиль не найден</div>
+                    <p>Сначала создайте тестовый профиль (Шаг 2).</p>
+                `;
+                return;
+            }
+            
+            try {
+                const historyData = JSON.parse(history);
+                const profileData = JSON.parse(profile);
+                
+                if (!profileData.dailyGoals) {
+                    document.getElementById('historyStatus').innerHTML = `
+                        <div class="status error">❌ В профиле нет дневных целей</div>
+                    `;
+                    return;
+                }
+                
+                let updatedCount = 0;
+                Object.keys(historyData).forEach(date => {
+                    const totals = historyData[date].dailyTotals;
+                    historyData[date].progressPercentages = {
+                        calories: Math.round((totals.calories / profileData.dailyGoals.targetCalories) * 100),
+                        protein: Math.round((totals.protein / profileData.dailyGoals.protein) * 100),
+                        fat: Math.round((totals.fat / profileData.dailyGoals.fat) * 100),
+                        carbohydrate: Math.round((totals.carbohydrate / profileData.dailyGoals.carbohydrate) * 100),
+                        fiber: Math.round((totals.fiber / profileData.dailyGoals.fiber) * 100)
+                    };
+                    updatedCount++;
+                });
+                
+                localStorage.setItem('meal-history', JSON.stringify(historyData));
+                
+                document.getElementById('historyStatus').innerHTML = `
+                    <div class="status success">✅ Прогресс добавлен в ${updatedCount} дней!</div>
+                    <p>Теперь откройте приложение и перейдите во вкладку "История".</p>
+                    <p>Вы должны увидеть прогресс-бары под каждым показателем КБЖУ.</p>
+                `;
+            } catch (e) {
+                document.getElementById('historyStatus').innerHTML = `
+                    <div class="status error">❌ Ошибка: ${e.message}</div>
+                `;
+            }
+        }
+        
+        // Автоматическая проверка при загрузке
+        window.onload = checkData;
+    </script>
+</body>
+</html>
