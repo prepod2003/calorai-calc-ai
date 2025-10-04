@@ -81,7 +81,7 @@ export const fetchModels = async (config: ApiConfig, providerId?: string): Promi
     }
 };
 
-const callAI = async (config: ApiConfig, messages: any[], isJson = true): Promise<any> => {
+const callAI = async (config: ApiConfig, messages: any[], isJson = true, maxTokens = 1024): Promise<any> => {
     const { token, model, baseUrl } = getCurrentProviderConfig(config);
     
     if (!token || !model) {
@@ -92,7 +92,7 @@ const callAI = async (config: ApiConfig, messages: any[], isJson = true): Promis
         model,
         messages,
         temperature: 0.1,
-        max_tokens: 1024,
+        max_tokens: maxTokens,
         ...(isJson && { response_format: { type: "json_object" } }),
     };
 
@@ -113,7 +113,22 @@ const callAI = async (config: ApiConfig, messages: any[], isJson = true): Promis
 
     const data = await response.json();
     const content = data.choices[0].message.content;
-    return isJson ? JSON.parse(content) : content;
+    
+    if (isJson) {
+        console.log('[AI Response] Raw content:', content);
+        try {
+            return JSON.parse(content);
+        } catch (e) {
+            console.warn('[AI Response] Failed to parse as JSON, trying to extract JSON from text');
+            const jsonMatch = content.match(/\{[\s\S]*\}/);  
+            if (jsonMatch) {
+                console.log('[AI Response] Extracted JSON:', jsonMatch[0]);
+                return JSON.parse(jsonMatch[0]);
+            }
+            throw new Error('Не удалось извлечь JSON из ответа AI');
+        }
+    }
+    return content;
 };
 
 export const fetchIngredientData = async (ingredientName: string, config: ApiConfig) => {
@@ -263,5 +278,141 @@ export const analyzeImageWithAI = async (imageFile: File, userHint: string, conf
     } catch (error) {
         console.error("Error analyzing image:", error);
         return null;
+    }
+};
+
+export const calculateDailyGoals = async (profile: any, config: ApiConfig) => {
+    const { token, model } = getCurrentProviderConfig(config);
+    if (!token || !model) {
+        throw new Error('Токен или модель не настроены');
+    }
+    
+    try {
+        const genderRu = profile.gender === 'male' ? 'мужской' : 'женский';
+        const activityLabels: { [key: string]: string } = {
+            minimal: 'минимальная (сидячая работа, нет тренировок)',
+            light: 'легкая (тренировки 1-3 раза в неделю)',
+            moderate: 'средняя (тренировки 3-5 раз в неделю)',
+            high: 'высокая (интенсивные тренировки 6-7 раз в неделю)',
+            extreme: 'очень высокая (физическая работа + интенсивные тренировки)',
+        };
+        const goalLabels: { [key: string]: string } = {
+            lose: 'снизить вес',
+            maintain: 'поддерживать вес',
+            gain: 'набрать вес',
+        };
+        
+        const prompt = `Рассчитай дневные нормы питания для человека со следующими данными:
+- Пол: ${genderRu}
+- Возраст: ${profile.age} лет
+- Вес: ${profile.weight} кг
+- Рост: ${profile.height} см
+- Уровень активности: ${activityLabels[profile.activityLevel] || profile.activityLevel}
+- Цель: ${goalLabels[profile.goal] || profile.goal}
+
+ВАЖНО: Ответь СТРОГО в формате JSON без дополнительного текста, объяснений или markdown форматирования. Верни только чистый JSON объект.
+
+Рассчитай:
+1. BMR (основной обмен) - формула Миффлина-Сан Жеора
+2. TDEE (общий расход с учетом активности)
+3. targetCalories (целевая калорийность: похудение -15-20% от TDEE, набор +10-15%, поддержание = TDEE)
+4. protein (белки г: 1.6-2.2 г/кг для похудения/набора, 1.2-1.6 г/кг поддержание)
+5. fat (жиры г: 25-30% от targetCalories, 1г = 9 ккал)
+6. carbohydrate (углеводы г: остаток калорий, 1г = 4 ккал)
+7. fiber (клетчатка г: 25-30 для женщин, 30-38 для мужчин)
+
+Формат ответа (только JSON, ничего более):
+{
+  "bmr": 1650,
+  "tdee": 2280,
+  "targetCalories": 1824,
+  "protein": 130,
+  "fat": 60,
+  "carbohydrate": 180,
+  "fiber": 30
+}`;
+
+        const messages = [{ role: "user", content: prompt }];
+        const data = await callAI(config, messages, true, 2048);
+        
+        console.log('[calculateDailyGoals] Received data:', data);
+
+        const result = {
+            bmr: Math.round(parseNutrientValue(data.bmr)),
+            tdee: Math.round(parseNutrientValue(data.tdee)),
+            targetCalories: Math.round(parseNutrientValue(data.targetCalories)),
+            protein: Math.round(parseNutrientValue(data.protein)),
+            fat: Math.round(parseNutrientValue(data.fat)),
+            carbohydrate: Math.round(parseNutrientValue(data.carbohydrate)),
+            fiber: Math.round(parseNutrientValue(data.fiber)),
+        };
+        
+        console.log('[calculateDailyGoals] Calculated result:', result);
+        return result;
+    } catch (error) {
+        console.error("Error calculating daily goals:", error);
+        throw new Error('Не удалось рассчитать дневные нормы. Проверьте подключение к AI.');
+    }
+};
+
+export const analyzeDailyIntake = async (
+    date: string,
+    dailyTotals: any,
+    meals: any[],
+    userGoals: any | null,
+    config: ApiConfig
+): Promise<string> => {
+    const { token, model } = getCurrentProviderConfig(config);
+    if (!token || !model) {
+        throw new Error('Токен или модель не настроены');
+    }
+    
+    try {
+        let prompt = `Проанализируй мой дневной рацион питания за ${date}.\n\n`;
+        
+        if (userGoals) {
+            prompt += `МОИ ЦЕЛИ:\n`;
+            prompt += `- Целевые калории: ${userGoals.targetCalories} ккал\n`;
+            prompt += `- Белки: ${userGoals.protein}г\n`;
+            prompt += `- Жиры: ${userGoals.fat}г\n`;
+            prompt += `- Углеводы: ${userGoals.carbohydrate}г\n`;
+            prompt += `- Клетчатка: ${userGoals.fiber}г\n\n`;
+        }
+        
+        prompt += `МОЕ ФАКТИЧЕСКОЕ ПОТРЕБЛЕНИЕ:\n`;
+        prompt += `- Калории: ${Math.round(dailyTotals.calories)} ккал\n`;
+        prompt += `- Белки: ${dailyTotals.protein.toFixed(1)}г\n`;
+        prompt += `- Жиры: ${dailyTotals.fat.toFixed(1)}г\n`;
+        prompt += `- Углеводы: ${dailyTotals.carbohydrate.toFixed(1)}г\n`;
+        prompt += `- Клетчатка: ${dailyTotals.fiber.toFixed(1)}г\n\n`;
+        
+        prompt += `МОЙ РАЦИОН:\n`;
+        meals.forEach((meal, index) => {
+            const mealTypeLabels: { [key: string]: string } = {
+                breakfast: 'Завтрак',
+                lunch: 'Обед',
+                dinner: 'Ужин',
+                snack: 'Перекус',
+            };
+            prompt += `${index + 1}. ${mealTypeLabels[meal.type] || meal.type}:\n`;
+            meal.ingredients.forEach((ing: any) => {
+                const ingCalories = Math.round((ing.baseCPFC.calories * ing.weight) / 100);
+                prompt += `   - ${ing.name} (${ing.weight}г) - ${ingCalories} ккал\n`;
+            });
+        });
+        
+        prompt += `\nДай краткий и понятный анализ (максимум 150-200 слов):\n`;
+        prompt += `1. Что было хорошо в моем питании?\n`;
+        prompt += `2. Что можно улучшить?\n`;
+        prompt += `3. Как скорректировать питание завтра, чтобы лучше соответствовать моим целям?\n\n`;
+        prompt += `Ответ должен быть дружелюбным, мотивирующим и конкретным. Формат ответа - обычный текст, не JSON.`;
+
+        const messages = [{ role: "user", content: prompt }];
+        const analysis = await callAI(config, messages, false);
+        
+        return analysis;
+    } catch (error) {
+        console.error("Error analyzing daily intake:", error);
+        throw new Error('Не удалось проанализировать рацион. Проверьте подключение к AI.');
     }
 };

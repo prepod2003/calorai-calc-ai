@@ -61,3 +61,26 @@ export interface SavedDish {
         fiber: number;
     };
 }
+
+export type Gender = 'male' | 'female';
+export type ActivityLevel = 'minimal' | 'light' | 'moderate' | 'high' | 'extreme';
+export type Goal = 'lose' | 'maintain' | 'gain';
+
+export interface UserProfile {
+    name: string;
+    gender: Gender;
+    age: number;
+    weight: number;
+    height: number;
+    activityLevel: ActivityLevel;
+    goal: Goal;
+    dailyGoals?: {
+        bmr: number;
+        tdee: number;
+        targetCalories: number;
+        protein: number;
+        fat: number;
+        carbohydrate: number;
+        fiber: number;
+    };
+}

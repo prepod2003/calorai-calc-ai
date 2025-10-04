@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { TrashIcon } from './ui/Icons';
-import { History } from '../types';
+import { TrashIcon, SparklesIcon, CloseIcon, SpinnerIcon } from './ui/Icons';
+import { History, ApiConfig, UserProfile } from '../types';
 import { exportToCSV, exportToJSON } from '../utils/exportHistory';
 import { formatDate, getMealTypeLabel } from '../utils/calculations';
+import { analyzeDailyIntake } from '../services/aiService';
 
 const NutritionLabel = ({ 
     label, 
@@ -29,12 +30,18 @@ interface HistoryViewProps {
     history: History;
     onRemoveMeal: (date: string, mealId: string) => void;
     onClearDay: (date: string) => void;
+    config: ApiConfig;
+    userProfile: UserProfile | null;
 }
 
-const HistoryView = ({ history, onRemoveMeal, onClearDay }: HistoryViewProps) => {
+const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }: HistoryViewProps) => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+    const [analyzingDate, setAnalyzingDate] = useState<string | null>(null);
+    const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+    const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const filteredDates = useMemo(() => {
         let dates = Object.keys(history);
@@ -60,6 +67,39 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay }: HistoryViewProps) =>
     const handleClearFilters = () => {
         setStartDate('');
         setEndDate('');
+    };
+
+    const handleAnalyzeDay = async (date: string) => {
+        setAnalyzingDate(date);
+        setAnalysisResult(null);
+        setAnalysisError(null);
+        setIsAnalyzing(true);
+
+        try {
+            const dayData = history[date];
+            const meals = Object.values(dayData.meals);
+            const userGoals = userProfile?.dailyGoals || null;
+            
+            const analysis = await analyzeDailyIntake(
+                formatDate(date),
+                dayData.dailyTotals,
+                meals,
+                userGoals,
+                config
+            );
+            
+            setAnalysisResult(analysis);
+        } catch (error) {
+            setAnalysisError((error as Error).message);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    const handleCloseAnalysis = () => {
+        setAnalyzingDate(null);
+        setAnalysisResult(null);
+        setAnalysisError(null);
     };
 
     if (Object.keys(history).length === 0) {
@@ -161,12 +201,21 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay }: HistoryViewProps) =>
                                 <h2 className="text-lg sm:text-xl font-bold">
                                     {formatDate(date)}
                                 </h2>
-                                <button 
-                                    onClick={() => onClearDay(date)} 
-                                    className="text-red-500 hover:text-red-700 text-xs font-semibold"
-                                >
-                                    Очистить день
-                                </button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => handleAnalyzeDay(date)} 
+                                        className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                                        title="Анализ рациона с помощью AI"
+                                    >
+                                        <SparklesIcon />
+                                    </button>
+                                    <button 
+                                        onClick={() => onClearDay(date)} 
+                                        className="text-red-500 hover:text-red-700 text-xs font-semibold"
+                                    >
+                                        Очистить день
+                                    </button>
+                                </div>
                             </div>
                             
                             <div className="grid grid-cols-3 gap-2 mb-4">
@@ -254,6 +303,46 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay }: HistoryViewProps) =>
                         </div>
                     );
                 })
+            )}
+
+            {/* Модальное окно с AI-анализом */}
+            {analyzingDate && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex justify-between items-center">
+                            <h2 className="text-xl font-bold">
+                                Анализ рациона за {formatDate(analyzingDate)}
+                            </h2>
+                            <button onClick={handleCloseAnalysis} className="text-slate-500 hover:text-slate-700">
+                                <CloseIcon />
+                            </button>
+                        </div>
+
+                        <div className="p-4 sm:p-6">
+                            {isAnalyzing && (
+                                <div className="flex items-center justify-center py-8">
+                                    <SpinnerIcon className="animate-spin h-8 w-8 text-blue-600" />
+                                    <span className="ml-3 text-slate-600">Анализирую ваш рацион...</span>
+                                </div>
+                            )}
+
+                            {analysisError && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <p className="text-red-600 font-semibold mb-2">Ошибка анализа</p>
+                                    <p className="text-red-700 text-sm">{analysisError}</p>
+                                </div>
+                            )}
+
+                            {analysisResult && (
+                                <div className="prose prose-sm max-w-none">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 whitespace-pre-wrap">
+                                        {analysisResult}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
