@@ -4,9 +4,11 @@ import IngredientSearch from './components/IngredientSearch';
 import DishBuilder from './components/DishBuilder';
 import HistoryView from './components/HistoryView';
 import ApiKeyManager from './components/ApiKeyManager';
-import { Ingredient, ApiConfig, History } from './types';
+import MyDishes from './components/MyDishes';
+import { Ingredient, ApiConfig, History, SavedDish } from './types';
 import { DEFAULT_PROVIDER_ID } from './constants/apiProviders';
 import { calculateTotals } from './utils/calculations';
+import { loadSavedDishes, saveDishToLibrary, updateDishInLibrary, deleteDishFromLibrary } from './utils/savedDishes';
 
 const MainTabButton = ({ 
     isActive, 
@@ -42,10 +44,17 @@ const App = () => {
     const [isApiModalOpen, setIsApiModalOpen] = useState(false);
     const [dishIngredients, setDishIngredients] = useState<Ingredient[]>([]);
     const [history, setHistory] = useState<History>({});
-    const [activeView, setActiveView] = useState<'builder' | 'history'>('builder');
+    const [savedDishes, setSavedDishes] = useState<SavedDish[]>([]);
+    const [activeView, setActiveView] = useState<'builder' | 'history' | 'dishes'>('builder');
     const [calculatePer100g, setCalculatePer100g] = useState(false);
 
+    const loadDishes = () => {
+        setSavedDishes(loadSavedDishes());
+    };
+
     useEffect(() => {
+        loadDishes();
+        
         const storedConfig = localStorage.getItem('api-config');
         if (storedConfig) {
             try {
@@ -92,8 +101,8 @@ const App = () => {
         }
     }, [history]);
 
-    const handleAddIngredient = (ingredient: Omit<Ingredient, 'weight'>) => {
-        setDishIngredients(prev => [...prev, { ...ingredient, weight: 100 }]);
+    const handleAddIngredient = (ingredient: Omit<Ingredient, 'weight'>, weight: number = 100) => {
+        setDishIngredients(prev => [...prev, { ...ingredient, weight }]);
     };
     
     const handleAnalysisComplete = (analyzedIngredients: any[]) => {
@@ -238,6 +247,13 @@ const App = () => {
                         >
                             История
                         </MainTabButton>
+                        <MainTabButton 
+                            isActive={activeView === 'dishes'} 
+                            onClick={() => setActiveView('dishes')}
+                            badge={savedDishes.length}
+                        >
+                            Мои блюда
+                        </MainTabButton>
                     </div>
                 )}
             </header>
@@ -256,7 +272,7 @@ const App = () => {
                                     />
                                     <IngredientSearch 
                                         onAddIngredient={handleAddIngredient} 
-                                        config={config} 
+                                        savedDishes={savedDishes}
                                     />
                                 </div>
                                 <DishBuilder 
@@ -265,9 +281,27 @@ const App = () => {
                                     onUpdateWeight={handleUpdateIngredientWeight} 
                                     onRemove={handleRemoveIngredient} 
                                     onClear={handleClearDish} 
-                                    onSave={handleSaveDish} 
+                                    onSave={handleSaveDish}
+                                    onRefreshSavedDishes={loadDishes}
                                 />
                             </div>
+                        )}
+                        {activeView === 'dishes' && (
+                            <MyDishes
+                                dishes={savedDishes}
+                                onAddDish={(dish) => {
+                                    saveDishToLibrary({ ...dish, id: crypto.randomUUID() });
+                                    loadDishes();
+                                }}
+                                onUpdateDish={(id, dish) => {
+                                    updateDishInLibrary(id, { ...dish, id });
+                                    loadDishes();
+                                }}
+                                onDeleteDish={(id) => {
+                                    deleteDishFromLibrary(id);
+                                    loadDishes();
+                                }}
+                            />
                         )}
                         {activeView === 'history' && (
                             <HistoryView 

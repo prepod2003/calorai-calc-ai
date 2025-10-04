@@ -49,3 +49,15 @@ export interface HistoryEntry {
 export interface History {
     [date: string]: HistoryEntry;
 }
+
+export interface SavedDish {
+    id: string;
+    name: string;
+    per100g: {
+        calories: number;
+        protein: number;
+        fat: number;
+        carbohydrate: number;
+        fiber: number;
+    };
+}

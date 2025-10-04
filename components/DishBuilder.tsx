@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Ingredient } from '../types';
-import { SaveIcon, TrashIcon } from './ui/Icons';
+import { Ingredient, SavedDish } from '../types';
+import { SaveIcon, TrashIcon, BookmarkIcon } from './ui/Icons';
+import { calculatePer100g } from '../utils/calculations';
+import { saveDishToLibrary } from '../utils/savedDishes';
 
 interface DishBuilderProps {
     ingredients: Ingredient[];
@@ -16,6 +18,7 @@ interface DishBuilderProps {
     onRemove: (id: string) => void;
     onClear: () => void;
     onSave: (mealType: string, ingredients: Ingredient[]) => void;
+    onRefreshSavedDishes?: () => void;
 }
 
 const NutritionLabel = ({ label, value, unit, color, precision = 1 }: { label: string, value: number, unit: string, color: string, precision?: number }) => (
@@ -25,11 +28,62 @@ const NutritionLabel = ({ label, value, unit, color, precision = 1 }: { label: s
     </div>
 );
 
-const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, onSave }: DishBuilderProps) => {
+const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, onSave, onRefreshSavedDishes }: DishBuilderProps) => {
     const [mealType, setMealType] = useState('lunch');
+    const [isNamingModalOpen, setIsNamingModalOpen] = useState(false);
+    const [dishName, setDishName] = useState('');
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     const handleSave = () => {
         onSave(mealType, ingredients);
+    };
+
+    const handleSaveToLibrary = () => {
+        if (ingredients.length === 0) return;
+        
+        if (ingredients.length === 1) {
+            const per100g = calculatePer100g(ingredients);
+            const newDish: SavedDish = {
+                id: crypto.randomUUID(),
+                name: ingredients[0].name,
+                per100g,
+            };
+            try {
+                saveDishToLibrary(newDish);
+                onRefreshSavedDishes?.();
+                setSaveError(null);
+            } catch (error) {
+                setSaveError((error as Error).message);
+            }
+        } else {
+            setIsNamingModalOpen(true);
+            setDishName('');
+            setSaveError(null);
+        }
+    };
+
+    const handleConfirmSaveToLibrary = () => {
+        if (!dishName.trim()) {
+            setSaveError('Введите название блюда');
+            return;
+        }
+        
+        const per100g = calculatePer100g(ingredients);
+        const newDish: SavedDish = {
+            id: crypto.randomUUID(),
+            name: dishName.trim(),
+            per100g,
+        };
+        
+        try {
+            saveDishToLibrary(newDish);
+            onRefreshSavedDishes?.();
+            setIsNamingModalOpen(false);
+            setDishName('');
+            setSaveError(null);
+        } catch (error) {
+            setSaveError((error as Error).message);
+        }
     };
 
     return (
@@ -84,12 +138,53 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
                             <option value="dinner">Ужин</option>
                             <option value="snack">Перекус</option>
                         </select>
+                        <button onClick={handleSaveToLibrary} className="flex items-center justify-center gap-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition text-base" title="Сохранить в справочник">
+                            <BookmarkIcon /> В справочник
+                        </button>
                         <button onClick={handleSave} className="flex items-center justify-center gap-1 bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition text-base">
                             <SaveIcon /> Сохранить
                         </button>
                     </div>
                 </div>
             </div>}
+            
+            {isNamingModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
+                        <h3 className="text-lg font-bold mb-4">Название блюда</h3>
+                        <input
+                            type="text"
+                            value={dishName}
+                            onChange={(e) => setDishName(e.target.value)}
+                            placeholder="Например, Овощной салат"
+                            className="w-full p-2 border border-slate-300 rounded-md mb-4"
+                            autoFocus
+                            onKeyDown={(e) => e.key === 'Enter' && handleConfirmSaveToLibrary()}
+                        />
+                        {saveError && (
+                            <p className="text-red-600 text-sm mb-4">{saveError}</p>
+                        )}
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => {
+                                    setIsNamingModalOpen(false);
+                                    setDishName('');
+                                    setSaveError(null);
+                                }}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md transition"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleConfirmSaveToLibrary}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                            >
+                                Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

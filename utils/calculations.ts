@@ -60,3 +60,28 @@ export const getMealTypeLabel = (type: string): string => {
     };
     return labels[type] || type;
 };
+
+/**
+ * Рассчитывает пищевую ценность на 100г из списка ингредиентов
+ */
+export const calculatePer100g = (ingredientsList: Ingredient[]) => {
+    const totals = calculateTotals(ingredientsList);
+    if (totals.weight === 0) {
+        return {
+            calories: 0,
+            protein: 0,
+            fat: 0,
+            carbohydrate: 0,
+            fiber: 0,
+        };
+    }
+    
+    const ratio = 100 / totals.weight;
+    return {
+        calories: Math.round(totals.calories * ratio),
+        protein: Number((totals.protein * ratio).toFixed(1)),
+        fat: Number((totals.fat * ratio).toFixed(1)),
+        carbohydrate: Number((totals.carbohydrate * ratio).toFixed(1)),
+        fiber: Number((totals.fiber * ratio).toFixed(1)),
+    };
+};
