@@ -24,9 +24,21 @@ const NutritionLabel = ({
 }) => {
     const isOverLimit = percentage !== undefined && percentage >= 110;
     const baseColor = color.match(/(blue|green|orange|purple|cyan)/)?.[1] || 'slate';
-    const progressBgColor = isOverLimit ? 'bg-red-100' : `bg-${baseColor}-50`;
-    const progressBarColor = isOverLimit ? 'bg-red-500' : `bg-${baseColor}-400`;
-    const progressTextColor = isOverLimit ? 'text-white font-bold' : `text-${baseColor}-700 font-semibold`;
+    
+    // Статические маппинги цветов для Tailwind
+    const colorMap = {
+        blue: { bg: 'bg-blue-50', bar: 'bg-blue-400', text: 'text-blue-700' },
+        green: { bg: 'bg-green-50', bar: 'bg-green-400', text: 'text-green-700' },
+        orange: { bg: 'bg-orange-50', bar: 'bg-orange-400', text: 'text-orange-700' },
+        purple: { bg: 'bg-purple-50', bar: 'bg-purple-400', text: 'text-purple-700' },
+        cyan: { bg: 'bg-cyan-50', bar: 'bg-cyan-400', text: 'text-cyan-700' },
+        slate: { bg: 'bg-slate-50', bar: 'bg-slate-400', text: 'text-slate-700' }
+    };
+    
+    const colors = colorMap[baseColor as keyof typeof colorMap] || colorMap.slate;
+    const progressBgColor = isOverLimit ? 'bg-red-100' : colors.bg;
+    const progressBarColor = isOverLimit ? 'bg-red-500' : colors.bar;
+    const progressTextColor = isOverLimit ? 'text-white font-bold' : `${colors.text} font-semibold`;
     const displayPercentage = Math.min(percentage || 0, 100);
     
     return (
@@ -39,17 +51,17 @@ const NutritionLabel = ({
             </div>
             {percentage !== undefined && goal !== undefined && (
                 <div className="mt-1 px-1">
-                    <div className={`relative h-4 ${progressBgColor} rounded-full overflow-hidden`}>
+                    <div className={`relative h-6 ${progressBgColor} rounded-full overflow-hidden`}>
                         <div 
                             className={`h-full ${progressBarColor} transition-all duration-300 flex items-center justify-center`}
                             style={{ width: `${displayPercentage}%` }}
                         >
-                            <span className={`text-[10px] sm:text-xs ${progressTextColor} font-semibold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
+                            <span className={`text-sm sm:text-base ${progressTextColor} font-bold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
                                 {percentage}%
                             </span>
                         </div>
                     </div>
-                    <p className="text-[10px] sm:text-xs text-slate-400 text-center mt-0.5">
+                    <p className="text-sm sm:text-base text-slate-500 text-center mt-1">
                         из {goal.toFixed(precision)} {unit}
                     </p>
                 </div>
