@@ -41,7 +41,7 @@ const NutritionLabel = ({
     const colors = colorMap[baseColor as keyof typeof colorMap] || colorMap.slate;
     const progressBgColor = isOverLimit ? 'bg-red-100' : 'bg-gray-200';
     const progressBarColor = isOverLimit ? 'bg-red-500' : colors.bar;
-    const progressTextColor = isOverLimit ? 'text-white font-bold' : `${colors.text} font-semibold`;
+    const progressTextColor = isOverLimit ? 'text-white' : 'text-gray-700';
     const displayPercentage = Math.min(percentage || 0, 100);
     
     const hasProgress = percentage !== undefined && goal !== undefined;
@@ -49,33 +49,34 @@ const NutritionLabel = ({
     
     return (
         <div className="w-full h-full flex flex-col">
-            <div className={`p-1.5 sm:p-2 rounded border ${colors.border} ${colors.bg} flex-1 flex flex-col justify-center`}>
-                <p className="text-[10px] sm:text-xs text-gray-600 break-words mb-0.5">{label}</p>
-                <p className={`text-sm sm:text-base font-bold break-words ${colors.text}`}>
-                    {value.toFixed(precision)} <span className="text-[10px] sm:text-xs font-normal text-gray-500">{unit}</span>
-                </p>
+            {/* Компактный блок: название и значение в одну строку */}
+            <div className={`px-2 py-1.5 rounded-lg border ${colors.border} ${colors.bg} flex items-center justify-between gap-1`}>
+                <span className="text-[11px] text-gray-600 whitespace-nowrap">{label}</span>
+                <span className={`text-sm font-bold ${colors.text} whitespace-nowrap`}>
+                    {value.toFixed(precision)}<span className="text-[10px] font-normal text-gray-500 ml-0.5">{unit}</span>
+                </span>
             </div>
+            {/* Увеличенный прогресс-бар */}
             {hasProgress && (
-                <div className="mt-1 px-0.5">
-                    <div className={`relative h-4 sm:h-5 ${progressBgColor} rounded-full overflow-hidden border border-gray-300`}>
+                <div className="mt-1.5">
+                    <div className={`relative h-6 ${progressBgColor} rounded-full overflow-hidden border border-gray-300`}>
                         <div 
-                            className={`h-full ${progressBarColor} transition-all duration-300 flex items-center justify-center`}
+                            className={`h-full ${progressBarColor} transition-all duration-300`}
                             style={{ width: `${displayPercentage}%` }}
-                        >
-                            <span className={`text-[9px] sm:text-xs ${progressTextColor} font-bold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
-                                {percentage}%
-                            </span>
-                        </div>
+                        />
+                        <span className={`absolute inset-0 flex items-center justify-center text-sm font-bold ${progressTextColor}`}>
+                            {percentage}%
+                        </span>
                     </div>
-                    <p className="text-[9px] sm:text-xs text-gray-600 text-center mt-0.5">
+                    <p className="text-xs text-gray-600 text-center mt-1">
                         из {goal.toFixed(precision)} {unit}
                     </p>
                 </div>
             )}
             {needsPlaceholder && (
-                <div className="mt-1 px-0.5 invisible">
-                    <div className="h-4 sm:h-5 rounded-full"></div>
-                    <p className="text-[9px] sm:text-xs mt-0.5">&nbsp;</p>
+                <div className="mt-1.5 invisible">
+                    <div className="h-6 rounded-full"></div>
+                    <p className="text-xs mt-1">&nbsp;</p>
                 </div>
             )}
         </div>
