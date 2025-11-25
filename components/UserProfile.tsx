@@ -37,6 +37,15 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!isOpen) return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isOpen]);
+
+    useEffect(() => {
         if (profile) {
             setFormData(profile);
             if (profile.dailyGoals) {
@@ -108,20 +117,26 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="glass-panel w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Мой профиль и цели</h2>
+        <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto overscroll-contain"
+            onClick={onClose}
+        >
+            <div 
+                className="glass-panel allow-scroll w-full max-w-4xl max-h-[95vh] bg-white"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="sticky top-0 bg-white border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center z-10">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Мой профиль и цели</h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
                         <CloseIcon />
                     </button>
                 </div>
 
-                <div className="p-4 sm:p-6 space-y-6">
+                <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
                     {/* Блок 1: Ваши данные */}
                     <div>
-                        <h3 className="text-lg font-bold mb-4 text-gray-900">Ваши данные</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-900">Ваши данные</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-700">Имя</label>
                                 <input
@@ -235,15 +250,15 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
 
                     {/* Блок 2: Ваши дневные нормы */}
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-gray-900">Ваши дневные нормы</h3>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900">Ваши дневные нормы</h3>
                             {!dailyGoalsForm.targetCalories && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-gray-500 hidden sm:inline">
                                     Используйте AI или введите вручную
                                 </span>
                             )}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-gray-700">Основной обмен (BMR), ккал</label>
                                     <input

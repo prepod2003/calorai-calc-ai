@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Ingredient, SavedDish } from '../types';
 import { SaveIcon, TrashIcon, BookmarkIcon } from './ui/Icons';
 import { calculatePer100g } from '../utils/calculations';
@@ -103,34 +104,36 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
     };
 
     return (
-        <div className="glass-panel p-4 sm:p-5 space-y-4 w-full animate-fade-up">
-            <div className="flex items-start justify-between gap-3">
+        <div className="glass-panel p-3 sm:p-4 space-y-3 w-full animate-fade-up">
+            <div className="flex items-start justify-between gap-2">
                 <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-1 font-medium">Designer</p>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Текущее блюдо</h2>
+                    <h2 className="text-base sm:text-xl font-semibold text-gray-900">🍳 Текущее блюдо</h2>
+                    <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">
+                        {ingredients.length > 0 ? `${ingredients.length} ингредиент(ов)` : 'Добавьте ингредиенты'}
+                    </p>
                 </div>
                 {ingredients.length > 0 && (
                     <button 
                         onClick={onClear} 
-                        className="mono-button text-sm px-3 py-1.5"
+                        className="mono-button text-xs px-3 py-1.5"
                     >
-                        Очистить
+                        🗑️ Очистить
                     </button>
                 )}
             </div>
 
-            <div className="space-y-2 max-h-[400px] sm:max-h-[480px] overflow-y-auto scrollbar-sleek">
+            <div className="space-y-1.5 sm:space-y-2 max-h-[300px] sm:max-h-[400px] overflow-y-auto scrollbar-sleek">
                 {ingredients.length === 0 ? (
-                    <div className="glass-panel p-6 text-center bg-gray-50">
-                        <p className="text-gray-600">Добавьте ингредиенты из AI-анализатора или справочника.</p>
+                    <div className="glass-panel p-4 sm:p-6 text-center bg-gray-50">
+                        <p className="text-sm text-gray-600">Добавьте ингредиенты из AI-анализатора или справочника.</p>
                     </div>
                 ) : (
                     ingredients.map(item => (
-                        <div key={item.id} className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 flex flex-col gap-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div key={item.id} className="rounded border border-gray-200 bg-white p-2 sm:p-3 flex flex-col gap-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-sm sm:text-base capitalize break-words text-gray-900">{item.name}</p>
-                                    <div className="flex flex-wrap gap-3 text-xs text-gray-600 mt-1">
+                                    <p className="font-semibold text-xs sm:text-sm capitalize break-words text-gray-900">{item.name}</p>
+                                    <div className="flex flex-wrap gap-2 text-[10px] sm:text-xs text-gray-600 mt-0.5">
                                         <span>К:{(item.baseCPFC.calories * item.weight / 100).toFixed(0)}</span>
                                         <span>Б:{(item.baseCPFC.protein * item.weight / 100).toFixed(1)}</span>
                                         <span>Ж:{(item.baseCPFC.fat * item.weight / 100).toFixed(1)}</span>
@@ -138,23 +141,23 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
                                         <span>Кл:{(item.baseCPFC.fiber * item.weight / 100).toFixed(1)}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                    <div className="flex items-center gap-1.5 bg-gray-50 rounded px-2 py-1 border border-gray-200">
                                         <input 
                                             type="number" 
                                             value={item.weight} 
                                             onChange={(e) => onUpdateWeight(item.id, parseInt(e.target.value, 10))} 
-                                            className="bg-transparent text-center w-16 sm:w-20 focus:outline-none text-base sm:text-lg text-gray-900"
+                                            className="bg-transparent text-center w-12 sm:w-16 focus:outline-none text-sm sm:text-base text-gray-900"
                                             min="0" 
                                         />
-                                        <span className="text-gray-600 text-sm">г</span>
+                                        <span className="text-gray-600 text-xs">г</span>
                                     </div>
                                     <button 
                                         onClick={() => onRemove(item.id)} 
-                                        className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                        className="text-gray-400 hover:text-red-600 transition-colors p-0.5"
                                         aria-label="Удалить ингредиент"
                                     >
-                                        <TrashIcon />
+                                        <TrashIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                                     </button>
                                 </div>
                             </div>
@@ -164,10 +167,10 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
             </div>
 
             {ingredients.length > 0 && (
-                <div className="space-y-4 border-t border-gray-200 pt-4">
+                <div className="space-y-3 border-t border-gray-200 pt-3">
                     <div>
-                        <h3 className="text-base sm:text-lg font-semibold mb-3 text-gray-900">Итого на блюдо</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                        <h3 className="text-sm sm:text-base font-semibold mb-2 text-gray-900">Итого на блюдо</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
                             <NutritionLabel label="Калории" value={totals.calories} unit="ккал" color="blue" precision={0} />
                             <NutritionLabel label="Белки" value={totals.protein} unit="г" color="green" />
                             <NutritionLabel label="Жиры" value={totals.fat} unit="г" color="orange" />
@@ -177,32 +180,32 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
                         </div>
                     </div>
 
-                    <div className="glass-panel p-4 space-y-3 bg-gray-50">
-                        <h3 className="text-sm sm:text-base font-semibold text-gray-900">Сохранить как</h3>
-                        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
+                    <div className="glass-panel p-3 sm:p-4 space-y-2 sm:space-y-3 bg-gray-50">
+                        <h3 className="text-xs sm:text-sm font-semibold text-gray-900">Сохранить как</h3>
+                        <div className="flex flex-col lg:flex-row gap-2">
                             <select 
                                 value={mealType} 
                                 onChange={e => setMealType(e.target.value)} 
                                 className="glow-input flex-1"
                             >
-                                <option value="breakfast">Завтрак</option>
-                                <option value="lunch">Обед</option>
-                                <option value="dinner">Ужин</option>
-                                <option value="snack">Перекус</option>
+                                <option value="breakfast">🌅 Завтрак</option>
+                                <option value="lunch">☀️ Обед</option>
+                                <option value="dinner">🌙 Ужин</option>
+                                <option value="snack">🍎 Перекус</option>
                             </select>
                             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-1">
                                 <button 
                                     onClick={handleSaveToLibrary} 
-                                    className="mono-button flex-1 flex items-center justify-center gap-2 text-sm"
+                                    className="mono-button flex-1 flex items-center justify-center gap-2 text-sm py-2.5"
                                     title="Сохранить в справочник"
                                 >
-                                    <BookmarkIcon /> В справочник
+                                    <BookmarkIcon /> 📚 В справочник
                                 </button>
                                 <button 
                                     onClick={handleSave} 
-                                    className="mono-button primary-cta flex-1 flex items-center justify-center gap-2 text-sm"
+                                    className="mono-button primary-cta flex-1 flex items-center justify-center gap-2 text-sm py-2.5"
                                 >
-                                    <SaveIcon /> Внести в день
+                                    <SaveIcon /> ✅ Внести в день
                                 </button>
                             </div>
                         </div>
@@ -210,42 +213,54 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
                 </div>
             )}
             
-            {isNamingModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="glass-panel p-5 sm:p-6 w-full max-w-md space-y-4">
-                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Название блюда</h3>
+            {isNamingModalOpen && createPortal(
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6"
+                    onClick={() => {
+                        setIsNamingModalOpen(false);
+                        setDishName('');
+                        setSaveError(null);
+                    }}
+                >
+                    <div 
+                        className="bg-white p-6 sm:p-8 w-full max-w-md space-y-5 rounded-2xl shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ margin: 'auto' }}
+                    >
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">📝 Название блюда</h3>
                         <input
                             type="text"
                             value={dishName}
                             onChange={(e) => setDishName(e.target.value)}
                             placeholder="Например, Овощной салат"
-                            className="glow-input w-full"
+                            className="glow-input w-full bg-white text-base py-3"
                             autoFocus
                             onKeyDown={(e) => e.key === 'Enter' && handleConfirmSaveToLibrary()}
                         />
                         {saveError && (
-                            <p className="text-sm text-red-600">{saveError}</p>
+                            <p className="text-red-600 text-sm font-medium bg-red-50 p-3 rounded-lg">{saveError}</p>
                         )}
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-3 justify-end pt-2">
                             <button
                                 onClick={() => {
                                     setIsNamingModalOpen(false);
                                     setDishName('');
                                     setSaveError(null);
                                 }}
-                                className="mono-button"
+                                className="mono-button px-5 py-2.5"
                             >
                                 Отмена
                             </button>
                             <button
                                 onClick={handleConfirmSaveToLibrary}
-                                className="mono-button primary-cta"
+                                className="mono-button primary-cta px-5 py-2.5"
                             >
-                                Сохранить
+                                💾 Сохранить
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

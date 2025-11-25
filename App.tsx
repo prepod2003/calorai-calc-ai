@@ -284,29 +284,34 @@ const App = () => {
                 />
             )}
             
-            <header className="sticky top-0 z-20 px-2 sm:px-4 lg:px-8 py-3">
-                <div className="glass-panel px-4 sm:px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p className="floating-badge uppercase tracking-[0.3em] text-[10px] sm:text-xs">Nutrition</p>
-                        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1 text-gray-900">Калькулятор КБЖУ</h1>
-                        <p className="text-sm text-gray-600 mt-1">
-                            {hasProfile ? `${userProfile?.name}, держим курс на цель.`
-                                : 'Настройте профиль, чтобы получить персональные рекомендации.'}
-                        </p>
+            <header className="px-2 sm:px-4 lg:px-8 py-2 sm:py-3 animate-fade-up stagger-1">
+                <div className="glass-panel px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#e07a5f] to-[#d06b4f] flex items-center justify-center shadow-md">
+                            <span className="text-white text-lg sm:text-xl">🍽️</span>
+                        </div>
+                        <div>
+                            <h1 className="text-base sm:text-xl lg:text-2xl font-semibold tracking-tight text-gray-900">
+                                Калькулятор КБЖУ
+                            </h1>
+                            <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">
+                                {hasProfile ? `${userProfile?.name}, отличный день для баланса!` : 'Контроль питания'}
+                            </p>
+                        </div>
                     </div>
                     {isReady && (
-                        <div className="flex flex-wrap gap-2 sm:justify-end">
+                        <div className="flex gap-1.5 sm:gap-2">
                             <button 
                                 onClick={() => setIsProfileModalOpen(true)} 
-                                className="mono-button"
+                                className="mono-button text-xs px-2.5 sm:px-3 py-1.5"
                             >
-                                Профиль
+                                <span className="hidden sm:inline">👤 </span>Профиль
                             </button>
                             <button 
                                 onClick={() => setIsApiModalOpen(true)} 
-                                className="mono-button primary-cta"
+                                className="mono-button primary-cta text-xs px-2.5 sm:px-3 py-1.5"
                             >
-                                Модели и токен
+                                <span className="hidden sm:inline">⚙️ </span>API
                             </button>
                         </div>
                     )}
@@ -314,40 +319,41 @@ const App = () => {
             </header>
             
             {isReady ? (
-                <main className="px-2 sm:px-4 lg:px-8 pb-10 space-y-6 animate-fade-up">
-                    <section className="hero-section relative overflow-hidden">
+                <main className="px-2 sm:px-4 lg:px-8 pb-4 sm:pb-10 space-y-3 sm:space-y-6">
+                    {/* Hero секция только на десктопе */}
+                    <section className="hero-section relative overflow-hidden hidden lg:block animate-fade-up stagger-2">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
                             <div className="flex-1">
-                                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 font-medium">Баланс питания</p>
-                                <h2 className="text-2xl sm:text-3xl font-semibold mt-2 leading-tight text-gray-900">
-                                    {hasProfile ? 'Персональная панель питания' : 'Создайте свой nutritional hub'}
+                                <p className="floating-badge mb-3">✨ Умный контроль питания</p>
+                                <h2 className="text-2xl sm:text-3xl font-semibold leading-tight text-gray-900">
+                                    {hasProfile ? 'Ваша персональная панель' : 'Создайте свой центр питания'}
                                 </h2>
-                                <p className="text-gray-600 mt-2 max-w-2xl text-sm sm:text-base">
-                                    Следите за рационом, создавайте блюда и сравнивайте с дневными целями в одном месте.
+                                <p className="text-gray-600 mt-3 max-w-2xl text-sm sm:text-base leading-relaxed">
+                                    Анализируйте рацион, создавайте блюда и достигайте целей в одном месте.
                                 </p>
-                                <div className="flex flex-wrap gap-2 mt-4">
+                                <div className="flex flex-wrap gap-3 mt-5">
                                     <button 
                                         className="mono-button primary-cta"
                                         onClick={() => setIsProfileModalOpen(true)}
                                     >
-                                        Настроить профиль
+                                        👤 Настроить профиль
                                     </button>
                                     <button 
                                         className="mono-button"
                                         onClick={() => setActiveView('history')}
                                     >
-                                        Смотреть историю
+                                        📊 История питания
                                     </button>
                                 </div>
                             </div>
                             {dishIngredients.length > 0 && (
-                                <div className="glass-panel px-4 py-4 lg:w-96">
-                                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Текущее блюдо</p>
-                                    <div className="grid grid-cols-2 gap-2">
+                                <div className="glass-panel px-5 py-5 lg:w-96 hover-glow">
+                                    <p className="text-xs uppercase tracking-[0.15em] text-gray-500 font-semibold mb-3">🍳 Текущее блюдо</p>
+                                    <div className="grid grid-cols-2 gap-3">
                                         {currentDishStats.map(stat => (
                                             <div key={stat.label} className="metric-pill text-left">
                                                 <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
-                                                <p className="text-base font-semibold text-gray-900">{stat.value}</p>
+                                                <p className="text-lg font-semibold text-gray-900">{stat.value}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -355,47 +361,47 @@ const App = () => {
                             )}
                         </div>
                         <div className="hero-grid">
-                            {heroStats.map((stat) => (
-                                <div key={stat.label} className="metric-pill">
+                            {heroStats.map((stat, idx) => (
+                                <div key={stat.label} className={`metric-pill animate-fade-up stagger-${idx + 3}`}>
                                     <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
                                     <h3 className="text-xl font-semibold text-gray-900">{stat.value}</h3>
-                                    <p className="text-xs text-gray-600 mt-1">{stat.helper}</p>
+                                    <p className="text-xs text-gray-500 mt-1.5">{stat.helper}</p>
                                 </div>
                             ))}
                         </div>
                     </section>
 
+                    {/* Навигация */}
                     {isReady && (
-                        <div className="glass-panel px-3 sm:px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-                            <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium hidden sm:block">Навигация</div>
-                            <div className="flex flex-col sm:flex-row gap-2 w-full">
+                        <div className="glass-panel px-2 sm:px-4 py-2 animate-fade-up stagger-2 lg:stagger-3">
+                            <div className="flex gap-1.5 sm:gap-2 w-full">
                                 <MainTabButton 
                                     isActive={activeView === 'builder'} 
                                     onClick={() => setActiveView('builder')} 
                                     badge={dishIngredients.length}
                                 >
-                                    Конструктор
+                                    🔬 Анализ
                                 </MainTabButton>
                                 <MainTabButton 
                                     isActive={activeView === 'history'} 
                                     onClick={() => setActiveView('history')}
                                 >
-                                    История
+                                    📅 История
                                 </MainTabButton>
                                 <MainTabButton 
                                     isActive={activeView === 'dishes'} 
                                     onClick={() => setActiveView('dishes')}
                                     badge={savedDishes.length}
                                 >
-                                    Мои блюда
+                                    📚 Блюда
                                 </MainTabButton>
                             </div>
                         </div>
                     )}
 
                     {activeView === 'builder' && (
-                        <div className="grid gap-6 lg:grid-cols-12">
-                            <div className="lg:col-span-5 space-y-6">
+                        <div className="grid gap-3 sm:gap-5 lg:grid-cols-12">
+                            <div className="lg:col-span-5 space-y-3 sm:space-y-5 animate-slide-left stagger-3 lg:stagger-4">
                                 <MealAnalyzer
                                     onAnalysisComplete={handleAnalysisComplete}
                                     config={config}
@@ -407,7 +413,7 @@ const App = () => {
                                     savedDishes={savedDishes}
                                 />
                             </div>
-                            <div className="lg:col-span-7">
+                            <div className="lg:col-span-7 animate-slide-right stagger-4 lg:stagger-5">
                                 <DishBuilder 
                                     ingredients={dishIngredients} 
                                     totals={memoizedTotals} 
@@ -450,17 +456,20 @@ const App = () => {
                     )}
                 </main>
             ) : (
-                <main className="px-2 sm:px-4 lg:px-8 pb-10">
-                    <div className="glass-panel px-6 py-8 text-center">
-                        <h2 className="text-2xl font-semibold mb-2 text-gray-900">Ожидание конфигурации API</h2>
-                        <p className="text-gray-600 mb-4">
-                            Подключите токен и модель, чтобы открыть весь функционал.
+                <main className="px-2 sm:px-4 lg:px-8 pb-10 flex items-center justify-center min-h-[60vh]">
+                    <div className="glass-panel px-8 py-10 text-center max-w-md animate-scale-in">
+                        <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-[#e07a5f] to-[#d06b4f] flex items-center justify-center shadow-lg">
+                            <span className="text-3xl">🔑</span>
+                        </div>
+                        <h2 className="text-2xl font-semibold mb-3 text-gray-900">Настройка API</h2>
+                        <p className="text-gray-600 mb-6 leading-relaxed">
+                            Подключите токен и выберите модель ИИ, чтобы открыть весь функционал калькулятора.
                         </p>
                         <button 
                             onClick={() => setIsApiModalOpen(true)} 
-                            className="mono-button primary-cta"
+                            className="mono-button primary-cta px-6 py-2.5"
                         >
-                            Настроить сейчас
+                            ⚙️ Настроить сейчас
                         </button>
                     </div>
                 </main>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { SavedDish } from '../types';
 import { PlusCircleIcon, TrashIcon, EditIcon } from './ui/Icons';
 
@@ -174,30 +175,40 @@ const MyDishes = ({ dishes, onAddDish, onUpdateDish, onDeleteDish }: MyDishesPro
                 </div>
             )}
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="glass-panel p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto space-y-4">
-                        <h3 className="text-xl font-bold">
+            {isModalOpen && createPortal(
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6"
+                    onClick={() => {
+                        setIsModalOpen(false);
+                        resetForm();
+                    }}
+                >
+                    <div 
+                        className="bg-white p-6 sm:p-8 w-full max-w-lg sm:max-w-xl space-y-5 rounded-2xl shadow-2xl overflow-y-auto max-h-[85vh]"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ margin: 'auto' }}
+                    >
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">
                             {editingId ? 'Редактировать блюдо' : 'Добавить блюдо'}
                         </h3>
                         
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-700">Название</label>
+                                <label className="block text-sm font-medium mb-2 text-gray-700">Название блюда</label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Например, Куриная грудка"
-                                    className="glow-input w-full bg-transparent"
+                                    className="glow-input w-full bg-white text-base py-3"
                                     autoFocus
                                 />
                             </div>
                             
-                            <div className="border-t border-gray-200 pt-3 space-y-3">
-                                <p className="text-sm font-medium text-gray-900">Пищевая ценность на 100г:</p>
+                            <div className="border-t border-gray-200 pt-4 space-y-4">
+                                <p className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Пищевая ценность на 100г:</p>
                                 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-2 gap-4">
                                     {([
                                         { key: 'calories', label: 'Калории (ккал)' },
                                         { key: 'protein', label: 'Белки (г)' },
@@ -206,13 +217,13 @@ const MyDishes = ({ dishes, onAddDish, onUpdateDish, onDeleteDish }: MyDishesPro
                                         { key: 'fiber', label: 'Клетчатка (г)', full: true },
                                     ] as Array<{ key: keyof DishFormData; label: string; full?: boolean }>).map(field => (
                                         <div key={field.key} className={field.full ? 'col-span-2' : ''}>
-                                            <label className="block text-xs text-gray-600 mb-1">{field.label}</label>
+                                            <label className="block text-sm text-gray-600 mb-2">{field.label}</label>
                                             <input
                                                 type="number"
                                                 value={formData[field.key]}
                                                 onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                                                 placeholder="0"
-                                                className="glow-input w-full bg-transparent"
+                                                className="glow-input w-full bg-white text-base py-3"
                                                 step="0.1"
                                                 min="0"
                                             />
@@ -223,28 +234,29 @@ const MyDishes = ({ dishes, onAddDish, onUpdateDish, onDeleteDish }: MyDishesPro
                         </div>
 
                         {formError && (
-                            <p className="text-red-300 text-sm">{formError}</p>
+                            <p className="text-red-600 text-sm font-medium bg-red-50 p-3 rounded-lg">{formError}</p>
                         )}
 
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-3 justify-end pt-2">
                             <button
                                 onClick={() => {
                                     setIsModalOpen(false);
                                     resetForm();
                                 }}
-                                className="mono-button"
+                                className="mono-button px-5 py-2.5"
                             >
                                 Отмена
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="mono-button primary-cta"
+                                className="mono-button primary-cta px-5 py-2.5"
                             >
                                 {editingId ? 'Сохранить' : 'Добавить'}
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

@@ -64,26 +64,26 @@ const MealAnalyzer = ({ onAnalysisComplete, config, calculatePer100g, onCalculat
     };
 
     return (
-        <div className="glass-panel p-4 sm:p-5 space-y-4 w-full animate-fade-up">
-            <div className="flex items-center justify-between gap-3">
+        <div className="glass-panel p-3 sm:p-4 space-y-3 w-full animate-fade-up">
+            <div className="flex items-center justify-between gap-2">
                 <div>
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Анализ блюда</h2>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">Опишите блюдо или загрузите фото — AI заполнит КБЖУ.</p>
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">🤖 Анализ блюда</h2>
+                    <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Опишите блюдо или загрузите фото</p>
                 </div>
-                <span className="chip">AI</span>
+                <span className="chip text-[10px]">ИИ-помощник</span>
             </div>
             
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Например: «Боул с киноа, авокадо и лососем»"
-                className="glow-input w-full min-h-[100px] sm:min-h-[120px] resize-none"
+                className="glow-input w-full min-h-[80px] sm:min-h-[100px] resize-none text-sm"
                 rows={3}
                 disabled={isLoading}
             />
             
-            <label className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
-                <div className={`relative w-10 h-5 rounded-full transition-colors ${calculatePer100g ? 'bg-indigo-500' : 'bg-gray-300'}`}>
+            <label className="flex items-center gap-3 text-sm text-gray-600 cursor-pointer select-none">
+                <div className={`relative w-11 h-6 rounded-full transition-all duration-200 ${calculatePer100g ? 'bg-[#e07a5f]' : 'bg-gray-200'}`}>
                     <input
                         type="checkbox"
                         id="calculatePer100g"
@@ -92,9 +92,9 @@ const MealAnalyzer = ({ onAnalysisComplete, config, calculatePer100g, onCalculat
                         className="sr-only"
                         disabled={isLoading}
                     />
-                    <span className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${calculatePer100g ? 'translate-x-5' : ''}`} />
+                    <span className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full transition-transform duration-200 shadow-sm ${calculatePer100g ? 'translate-x-5' : ''}`} />
                 </div>
-                Расчёт на 100 г (игнорировать вес)
+                <span>Расчёт на 100 г</span>
             </label>
 
             {image && (
@@ -124,22 +124,22 @@ const MealAnalyzer = ({ onAnalysisComplete, config, calculatePer100g, onCalculat
                 aria-hidden="true" 
             />
             
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
                 <button 
                     onClick={handleFileSelect} 
                     disabled={isLoading} 
-                    className="mono-button w-full sm:w-auto flex items-center justify-center gap-2 border-dashed border-2"
+                    className="mono-button w-full sm:w-auto flex items-center justify-center gap-2 border-dashed border-2 text-sm py-2.5"
                 >
-                    <PhotoIcon />
-                    <span className="text-sm">{image ? 'Изменить фото' : 'Загрузить фото'}</span>
+                    <PhotoIcon className="w-4 h-4" />
+                    <span>{image ? '📷 Изменить фото' : '📷 Загрузить фото'}</span>
                 </button>
                 <button 
                     onClick={handleAnalyze} 
                     disabled={isLoading || (!image && !text.trim())} 
-                    className="mono-button primary-cta w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mono-button primary-cta w-full sm:flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm py-2.5"
                 >
-                    {isLoading ? <SpinnerIcon /> : null}
-                    <span className="text-sm">Проанализировать</span>
+                    {isLoading ? <SpinnerIcon className="w-4 h-4" /> : <span>✨</span>}
+                    <span>{isLoading ? 'Анализирую...' : 'Анализировать'}</span>
                 </button>
             </div>
 

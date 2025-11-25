@@ -147,8 +147,14 @@ const ApiKeyManager = ({ config, setConfig, isOpen, onClose }: ApiKeyManagerProp
     const currentProvider = API_PROVIDERS.find(p => p.id === currentProviderId);
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="glass-panel p-4 sm:p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto space-y-4">
+        <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fade-in"
+            onClick={onClose}
+        >
+            <div 
+                className="glass-panel p-3 sm:p-6 w-full max-w-lg relative max-h-[95vh] overflow-y-auto space-y-3 sm:space-y-4 bg-white"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <button 
                     onClick={onClose} 
                     className="absolute top-2 right-2 p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors" 
@@ -157,7 +163,7 @@ const ApiKeyManager = ({ config, setConfig, isOpen, onClose }: ApiKeyManagerProp
                     <CloseIcon />
                 </button>
                 
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Настройки API</h2>
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 text-gray-900">Настройки API</h2>
                 
                 <div className="space-y-4">
                     <div>

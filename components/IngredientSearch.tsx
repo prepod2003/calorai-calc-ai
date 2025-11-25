@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { PlusCircleIcon, SearchIcon } from './ui/Icons';
 import { Ingredient, SavedDish } from '../types';
 import { searchDishes } from '../utils/savedDishes';
@@ -50,10 +51,10 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
     };
 
     return (
-        <div className="glass-panel p-4 sm:p-5 space-y-4 w-full animate-fade-up">
-            <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Поиск по справочнику</h2>
-                <span className="chip text-xs">Library</span>
+        <div className="glass-panel p-3 sm:p-4 space-y-3 w-full animate-fade-up">
+            <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">📖 Поиск по справочнику</h2>
+                <span className="chip text-[10px]">Мои блюда</span>
             </div>
             <div className="relative w-full">
                 <input 
@@ -93,19 +94,30 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
                 </p>
             )}
 
-            {isWeightModalOpen && selectedDish && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="glass-panel w-full max-w-md space-y-4 p-5">
-                        <h3 className="text-lg font-semibold text-gray-900">{selectedDish.name}</h3>
-                        <p className="text-sm text-gray-600">Укажите вес порции:</p>
+            {isWeightModalOpen && selectedDish && createPortal(
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6"
+                    onClick={() => {
+                        setIsWeightModalOpen(false);
+                        setSelectedDish(null);
+                        setPortionWeight('');
+                    }}
+                >
+                    <div 
+                        className="bg-white w-full max-w-md space-y-4 p-5 sm:p-6 rounded-2xl shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ margin: 'auto' }}
+                    >
+                        <h3 className="text-xl font-bold text-gray-900 text-center">{selectedDish.name}</h3>
+                        <p className="text-sm text-gray-600 text-center">Укажите вес порции:</p>
                         
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 justify-center">
                             <input
                                 type="number"
                                 value={portionWeight}
                                 onChange={(e) => setPortionWeight(e.target.value)}
                                 placeholder="Вес"
-                                className="glow-input flex-1 text-center text-lg"
+                                className="glow-input w-32 text-center text-lg bg-white"
                                 autoFocus
                                 min="1"
                                 step="1"
@@ -114,8 +126,8 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
                             <span className="text-gray-600 font-medium">грамм</span>
                         </div>
 
-                        <div className="glass-panel p-3 bg-gray-50">
-                            <p className="text-xs text-gray-500 mb-2">КБЖУК для {portionWeight || 0} г:</p>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <p className="text-xs text-gray-500 mb-3 uppercase tracking-wide font-medium">КБЖУК для {portionWeight || 0} г:</p>
                             <div className="grid grid-cols-5 gap-2 text-center text-xs">
                                 {(['Кал', 'Б', 'Ж', 'У', 'Кл'] as const).map((label, idx) => {
                                     const weightValue = parseFloat(portionWeight) || 0;
@@ -136,27 +148,28 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
                             </div>
                         </div>
 
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-3 justify-end pt-2">
                             <button
                                 onClick={() => {
                                     setIsWeightModalOpen(false);
                                     setSelectedDish(null);
                                     setPortionWeight('');
                                 }}
-                                className="mono-button"
+                                className="mono-button px-5 py-2.5"
                             >
                                 Отмена
                             </button>
                             <button
                                 onClick={handleAddWithWeight}
-                                className="mono-button primary-cta flex items-center gap-2"
+                                className="mono-button primary-cta flex items-center gap-2 px-5 py-2.5"
                                 disabled={!portionWeight || parseFloat(portionWeight) <= 0}
                             >
                                 <PlusCircleIcon /> Добавить
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

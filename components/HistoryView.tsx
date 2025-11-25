@@ -12,7 +12,8 @@ const NutritionLabel = ({
     color, 
     precision = 1,
     percentage,
-    goal
+    goal,
+    showPlaceholder = false
 }: { 
     label: string; 
     value: number; 
@@ -21,9 +22,10 @@ const NutritionLabel = ({
     precision?: number;
     percentage?: number;
     goal?: number;
+    showPlaceholder?: boolean;
 }) => {
     const isOverLimit = percentage !== undefined && percentage >= 110;
-    const baseColor = color.match(/(blue|green|orange|purple|cyan)/)?.[1] || 'slate';
+    const baseColor = color.match(/(blue|green|orange|purple|cyan|gray)/)?.[1] || 'slate';
     
     // Статические маппинги цветов для Tailwind
     const colorMap = {
@@ -32,6 +34,7 @@ const NutritionLabel = ({
         orange: { bg: 'bg-orange-50', bar: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-200' },
         purple: { bg: 'bg-purple-50', bar: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-200' },
         cyan: { bg: 'bg-cyan-50', bar: 'bg-cyan-500', text: 'text-cyan-700', border: 'border-cyan-200' },
+        gray: { bg: 'bg-gray-50', bar: 'bg-gray-500', text: 'text-gray-700', border: 'border-gray-200' },
         slate: { bg: 'bg-gray-50', bar: 'bg-gray-500', text: 'text-gray-700', border: 'border-gray-200' }
     };
     
@@ -41,29 +44,38 @@ const NutritionLabel = ({
     const progressTextColor = isOverLimit ? 'text-white font-bold' : `${colors.text} font-semibold`;
     const displayPercentage = Math.min(percentage || 0, 100);
     
+    const hasProgress = percentage !== undefined && goal !== undefined;
+    const needsPlaceholder = showPlaceholder && !hasProgress;
+    
     return (
-        <div className="w-full">
-            <div className={`p-3 rounded-lg border ${colors.border} ${colors.bg}`}>
-                <p className="text-xs text-gray-600 break-words mb-1">{label}</p>
-                <p className={`text-lg font-bold break-words ${colors.text} mt-1`}>
-                    {value.toFixed(precision)} <span className="text-sm font-normal text-gray-500">{unit}</span>
+        <div className="w-full h-full flex flex-col">
+            <div className={`p-1.5 sm:p-2 rounded border ${colors.border} ${colors.bg} flex-1 flex flex-col justify-center`}>
+                <p className="text-[10px] sm:text-xs text-gray-600 break-words mb-0.5">{label}</p>
+                <p className={`text-sm sm:text-base font-bold break-words ${colors.text}`}>
+                    {value.toFixed(precision)} <span className="text-[10px] sm:text-xs font-normal text-gray-500">{unit}</span>
                 </p>
             </div>
-            {percentage !== undefined && goal !== undefined && (
-                <div className="mt-2 px-1">
-                    <div className={`relative h-6 ${progressBgColor} rounded-full overflow-hidden border border-gray-300`}>
+            {hasProgress && (
+                <div className="mt-1 px-0.5">
+                    <div className={`relative h-4 sm:h-5 ${progressBgColor} rounded-full overflow-hidden border border-gray-300`}>
                         <div 
                             className={`h-full ${progressBarColor} transition-all duration-300 flex items-center justify-center`}
                             style={{ width: `${displayPercentage}%` }}
                         >
-                            <span className={`text-xs sm:text-sm ${progressTextColor} font-bold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
+                            <span className={`text-[9px] sm:text-xs ${progressTextColor} font-bold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
                                 {percentage}%
                             </span>
                         </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-600 text-center mt-1">
+                    <p className="text-[9px] sm:text-xs text-gray-600 text-center mt-0.5">
                         из {goal.toFixed(precision)} {unit}
                     </p>
+                </div>
+            )}
+            {needsPlaceholder && (
+                <div className="mt-1 px-0.5 invisible">
+                    <div className="h-4 sm:h-5 rounded-full"></div>
+                    <p className="text-[9px] sm:text-xs mt-0.5">&nbsp;</p>
                 </div>
             )}
         </div>
@@ -257,29 +269,29 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                     });
                     
                     return (
-                        <div key={date} className="glass-panel p-4 sm:p-6 space-y-4 animate-fade-up">
-                            <div className="flex justify-between items-center gap-3 border-b border-gray-200 pb-3">
-                                <h2 className="text-xl font-semibold">
+                        <div key={date} className="glass-panel p-2 sm:p-4 space-y-2 sm:space-y-3 animate-fade-up">
+                            <div className="flex justify-between items-center gap-2 border-b border-gray-200 pb-2">
+                                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                                     {formatDate(date)}
                                 </h2>
-                                <div className="flex gap-2">
+                                <div className="flex gap-1 sm:gap-2">
                                     <button 
                                         onClick={() => handleAnalyzeDay(date)} 
-                                        className="mono-button px-4 py-2 flex items-center gap-2 text-sm"
+                                        className="mono-button px-2 sm:px-3 py-1 text-xs sm:text-sm flex items-center gap-1"
                                         title="Анализ рациона с помощью AI"
                                     >
-                                        <SparklesIcon /> AI анализ
+                                        <SparklesIcon className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">AI</span>
                                     </button>
                                     <button 
                                         onClick={() => onClearDay(date)} 
-                                        className="text-red-300 hover:text-red-200 text-sm font-semibold"
+                                        className="text-red-500 hover:text-red-600 text-xs sm:text-sm font-semibold px-1"
                                     >
-                                        Очистить день
+                                        ×
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 sm:gap-2 items-stretch">
                                 <NutritionLabel 
                                     label="Калории" 
                                     value={totals.calories} 
@@ -321,47 +333,51 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                                     percentage={progress?.fiber}
                                     goal={goals?.fiber}
                                 />
-                                <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
-                                    <p className="text-xs text-gray-600">Общий вес</p>
-                                    <p className="text-xl font-semibold mt-1 text-gray-900">{totals.weight.toFixed(0)} <span className="text-sm text-gray-600">г</span></p>
-                                </div>
+                                <NutritionLabel 
+                                    label="Общий вес" 
+                                    value={totals.weight} 
+                                    unit="г" 
+                                    color="bg-gray-100 text-gray-800" 
+                                    precision={0}
+                                    showPlaceholder={!!goals}
+                                />
                             </div>
                             
-                            <div className="space-y-3">
+                            <div className="space-y-1.5 sm:space-y-2">
                                 {Object.entries(dayData.meals).map(([mealId, meal]: [string, any]) => (
-                                    <div key={mealId} className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h3 className="font-bold text-base capitalize flex items-center gap-2">
+                                    <div key={mealId} className="rounded border border-gray-200 bg-white p-2 sm:p-3">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <h3 className="font-semibold text-sm capitalize flex items-center gap-1.5 text-gray-900">
                                                 {getMealTypeLabel(meal.type)}
-                                                <span className="chip text-xs capitalize">{meal.type}</span>
+                                                <span className="chip text-[10px] capitalize">{meal.type}</span>
                                             </h3>
                                             <button 
                                                 onClick={() => onRemoveMeal(date, mealId)} 
-                                                className="p-1 text-gray-400 hover:text-red-600"
+                                                className="p-0.5 text-gray-400 hover:text-red-600"
                                             >
-                                                <TrashIcon />
+                                                <TrashIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                                             </button>
                                         </div>
-                                        <ul className="text-sm space-y-2">
+                                        <ul className="text-xs sm:text-sm space-y-1">
                                             {meal.ingredients.map((ing: any) => (
                                                 <li 
                                                     key={ing.id} 
-                                                    className="border-t border-gray-200 pt-2 mt-2 first:border-t-0 first:pt-0 first:mt-0"
+                                                    className="border-t border-gray-200 pt-1 mt-1 first:border-t-0 first:pt-0 first:mt-0"
                                                 >
                                                     <div className="flex justify-between items-center">
-                                                        <span className="font-semibold capitalize break-words">
+                                                        <span className="font-medium capitalize break-words text-gray-900">
                                                             {ing.name}
                                                         </span>
-                                                        <span className="font-semibold flex-shrink-0 ml-2">
+                                                        <span className="font-semibold flex-shrink-0 ml-2 text-gray-700">
                                                             {ing.weight}г
                                                         </span>
                                                     </div>
-                                                    <div className="text-xs text-slate-600 flex flex-wrap gap-x-3 gap-y-1 mt-1">
-                                                        <span>К: {(ing.baseCPFC.calories * ing.weight / 100).toFixed(0)}</span>
-                                                        <span>Б: {(ing.baseCPFC.protein * ing.weight / 100).toFixed(1)}</span>
-                                                        <span>Ж: {(ing.baseCPFC.fat * ing.weight / 100).toFixed(1)}</span>
-                                                        <span>У: {(ing.baseCPFC.carbohydrate * ing.weight / 100).toFixed(1)}</span>
-                                                        <span>Кл: {(ing.baseCPFC.fiber * ing.weight / 100).toFixed(1)}</span>
+                                                    <div className="text-[10px] sm:text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                                                        <span>К:{(ing.baseCPFC.calories * ing.weight / 100).toFixed(0)}</span>
+                                                        <span>Б:{(ing.baseCPFC.protein * ing.weight / 100).toFixed(1)}</span>
+                                                        <span>Ж:{(ing.baseCPFC.fat * ing.weight / 100).toFixed(1)}</span>
+                                                        <span>У:{(ing.baseCPFC.carbohydrate * ing.weight / 100).toFixed(1)}</span>
+                                                        <span>Кл:{(ing.baseCPFC.fiber * ing.weight / 100).toFixed(1)}</span>
                                                     </div>
                                                 </li>
                                             ))}
@@ -376,10 +392,16 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
 
             {/* Модальное окно с AI-анализом */}
             {analyzingDate && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="glass-panel w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900">
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
+                    onClick={handleCloseAnalysis}
+                >
+                    <div 
+                        className="glass-panel w-full max-w-2xl max-h-[95vh] overflow-y-auto bg-white"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="sticky top-0 bg-white border-b border-gray-200 p-3 sm:p-4 flex justify-between items-center z-10">
+                            <h2 className="text-base sm:text-xl font-bold text-gray-900">
                                 Анализ рациона за {formatDate(analyzingDate)}
                             </h2>
                             <button onClick={handleCloseAnalysis} className="text-gray-500 hover:text-gray-700">
