@@ -108,11 +108,11 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex justify-between items-center">
-                    <h2 className="text-xl font-bold">Мой профиль и цели</h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="glass-panel w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-gray-900">Мой профиль и цели</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
                         <CloseIcon />
                     </button>
                 </div>
@@ -120,25 +120,25 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
                 <div className="p-4 sm:p-6 space-y-6">
                     {/* Блок 1: Ваши данные */}
                     <div>
-                        <h3 className="text-lg font-bold mb-4">Ваши данные</h3>
+                        <h3 className="text-lg font-bold mb-4 text-gray-900">Ваши данные</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Имя</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Имя</label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Например, Иван"
-                                    className="w-full p-2 border border-slate-300 rounded-md"
+                                    className="glow-input w-full"
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium mb-1">Пол</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Пол</label>
                                 <select
                                     value={formData.gender}
                                     onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender })}
-                                    className="w-full p-2 border border-slate-300 rounded-md bg-white"
+                                    className="glow-input w-full"
                                 >
                                     <option value="male">Мужской</option>
                                     <option value="female">Женский</option>
@@ -146,47 +146,47 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium mb-1">Возраст (лет)</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Возраст (лет)</label>
                                 <input
                                     type="number"
                                     value={formData.age}
                                     onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 0 })}
-                                    className="w-full p-2 border border-slate-300 rounded-md"
+                                    className="glow-input w-full"
                                     min="1"
                                     max="120"
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium mb-1">Вес (кг)</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Вес (кг)</label>
                                 <input
                                     type="number"
                                     value={formData.weight}
                                     onChange={(e) => setFormData({ ...formData, weight: parseFloat(e.target.value) || 0 })}
-                                    className="w-full p-2 border border-slate-300 rounded-md"
+                                    className="glow-input w-full"
                                     min="1"
                                     step="0.1"
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium mb-1">Рост (см)</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Рост (см)</label>
                                 <input
                                     type="number"
                                     value={formData.height}
                                     onChange={(e) => setFormData({ ...formData, height: parseInt(e.target.value) || 0 })}
-                                    className="w-full p-2 border border-slate-300 rounded-md"
+                                    className="glow-input w-full"
                                     min="1"
                                     max="250"
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium mb-1">Уровень активности</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Уровень активности</label>
                                 <select
                                     value={formData.activityLevel}
                                     onChange={(e) => setFormData({ ...formData, activityLevel: e.target.value as ActivityLevel })}
-                                    className="w-full p-2 border border-slate-300 rounded-md bg-white text-sm"
+                                    className="glow-input w-full"
                                 >
                                     <option value="minimal">{getActivityLevelLabel('minimal')}</option>
                                     <option value="light">{getActivityLevelLabel('light')}</option>
@@ -197,11 +197,11 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
                             </div>
                             
                             <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium mb-1">Ваша цель</label>
+                                <label className="block text-sm font-medium mb-1 text-gray-700">Ваша цель</label>
                                 <select
                                     value={formData.goal}
                                     onChange={(e) => setFormData({ ...formData, goal: e.target.value as Goal })}
-                                    className="w-full p-2 border border-slate-300 rounded-md bg-white"
+                                    className="glow-input w-full"
                                 >
                                     <option value="lose">{getGoalLabel('lose')}</option>
                                     <option value="maintain">{getGoalLabel('maintain')}</option>
@@ -216,13 +216,13 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
                         <button
                             onClick={handleCalculateGoals}
                             disabled={isCalculating}
-                            className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition disabled:bg-slate-400 flex items-center justify-center gap-2"
+                            className="mono-button primary-cta w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isCalculating ? <SpinnerIcon /> : null}
                             {isCalculating ? 'Расчет...' : 'Рассчитать с помощью AI'}
                         </button>
                         {error && (
-                            <div className="bg-red-50 border border-red-200 rounded-md p-3 mt-2">
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-2">
                                 <p className="text-red-600 text-sm font-semibold mb-1">Ошибка расчета</p>
                                 <p className="text-red-700 text-sm">{error}</p>
                                 <p className="text-red-600 text-xs mt-2">
@@ -236,90 +236,90 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
                     {/* Блок 2: Ваши дневные нормы */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold">Ваши дневные нормы</h3>
+                            <h3 className="text-lg font-bold text-gray-900">Ваши дневные нормы</h3>
                             {!dailyGoalsForm.targetCalories && (
-                                <span className="text-xs text-slate-500">
+                                <span className="text-xs text-gray-500">
                                     Используйте AI или введите вручную
                                 </span>
                             )}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Основной обмен (BMR), ккал</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Основной обмен (BMR), ккал</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.bmr}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, bmr: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Активный расход (TDEE), ккал</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Активный расход (TDEE), ккал</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.tdee}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, tdee: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Цель по калориям, ккал</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Цель по калориям, ккал</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.targetCalories}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, targetCalories: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Белки, г</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Белки, г</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.protein}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, protein: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                         step="0.1"
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Жиры, г</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Жиры, г</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.fat}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, fat: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                         step="0.1"
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Углеводы, г</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Углеводы, г</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.carbohydrate}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, carbohydrate: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                         step="0.1"
                                     />
                                 </div>
                                 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Клетчатка, г</label>
+                                    <label className="block text-sm font-medium mb-1 text-gray-700">Клетчатка, г</label>
                                     <input
                                         type="number"
                                         value={dailyGoalsForm.fiber}
                                         onChange={(e) => setDailyGoalsForm({ ...dailyGoalsForm, fiber: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded-md"
+                                        className="glow-input w-full"
                                         min="0"
                                         step="0.1"
                                     />
@@ -328,16 +328,16 @@ const UserProfile = ({ isOpen, onClose, profile, onSave, config }: UserProfilePr
                     </div>
 
                     {/* Кнопка сохранения */}
-                    <div className="flex gap-2 justify-end pt-4 border-t border-slate-200">
+                    <div className="flex gap-2 justify-end pt-4 border-t border-gray-200">
                         <button
                             onClick={onClose}
-                            className="px-6 py-2 text-slate-600 hover:bg-slate-100 rounded-md transition"
+                            className="mono-button"
                         >
                             Отмена
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-bold"
+                            className="mono-button primary-cta"
                         >
                             Сохранить
                         </button>

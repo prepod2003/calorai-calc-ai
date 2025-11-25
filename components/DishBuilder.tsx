@@ -21,12 +21,28 @@ interface DishBuilderProps {
     onRefreshSavedDishes?: () => void;
 }
 
-const NutritionLabel = ({ label, value, unit, color, precision = 1 }: { label: string, value: number, unit: string, color: string, precision?: number }) => (
-    <div className={`p-1.5 sm:p-2 lg:p-3 rounded-md text-center w-full ${color}`}>
-        <p className="text-xs sm:text-sm font-medium opacity-80 break-words">{label}</p>
-        <p className="text-sm sm:text-base font-bold break-words">{value.toFixed(precision)} <span className="text-xs font-normal">{unit}</span></p>
-    </div>
-);
+type Accent = 'blue' | 'green' | 'orange' | 'purple' | 'cyan' | 'slate';
+
+const accentMap: Record<Accent, { bg: string; text: string; border: string }> = {
+    blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    green: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    orange: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+    purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+    cyan: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
+    slate: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' },
+};
+
+const NutritionLabel = ({ label, value, unit, color, precision = 1 }: { label: string, value: number, unit: string, color: Accent, precision?: number }) => {
+    const accent = accentMap[color];
+    return (
+        <div className={`rounded-lg border ${accent.border} p-3 ${accent.bg}`}>
+            <p className="text-xs text-gray-600 mb-1">{label}</p>
+            <p className={`text-lg font-semibold ${accent.text}`}>
+                {value.toFixed(precision)} <span className="text-sm text-gray-500">{unit}</span>
+            </p>
+        </div>
+    );
+};
 
 const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, onSave, onRefreshSavedDishes }: DishBuilderProps) => {
     const [mealType, setMealType] = useState('lunch');
@@ -87,21 +103,34 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
     };
 
     return (
-        <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg shadow-md w-full">
-            <div className="flex justify-between items-center mb-2">
-                <h2 className="text-base sm:text-lg lg:text-xl font-bold break-words flex-1 min-w-0">Текущее блюдо</h2>
-                {ingredients.length > 0 && <button onClick={onClear} className="text-xs sm:text-sm text-red-600 hover:text-red-800 font-semibold transition-colors flex-shrink-0 ml-2">Очистить</button>}
+        <div className="glass-panel p-4 sm:p-5 space-y-4 w-full animate-fade-up">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-1 font-medium">Designer</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Текущее блюдо</h2>
+                </div>
+                {ingredients.length > 0 && (
+                    <button 
+                        onClick={onClear} 
+                        className="mono-button text-sm px-3 py-1.5"
+                    >
+                        Очистить
+                    </button>
+                )}
             </div>
-            <div className="space-y-2 mb-2 sm:mb-3 max-h-96 overflow-y-auto">
+
+            <div className="space-y-2 max-h-[400px] sm:max-h-[480px] overflow-y-auto scrollbar-sleek">
                 {ingredients.length === 0 ? (
-                    <div className="text-center py-4 sm:py-6 text-slate-500 bg-slate-50 rounded-lg text-sm w-full"><p>Добавьте ингредиенты</p></div>
+                    <div className="glass-panel p-6 text-center bg-gray-50">
+                        <p className="text-gray-600">Добавьте ингредиенты из AI-анализатора или справочника.</p>
+                    </div>
                 ) : (
                     ingredients.map(item => (
-                        <div key={item.id} className="p-2 sm:p-3 bg-slate-50 rounded-md animate-fade-in w-full">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
-                                <div className="flex-1 min-w-0 w-full sm:w-auto">
-                                    <p className="font-semibold text-sm capitalize break-words">{item.name}</p>
-                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600 mt-1">
+                        <div key={item.id} className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4 flex flex-col gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-sm sm:text-base capitalize break-words text-gray-900">{item.name}</p>
+                                    <div className="flex flex-wrap gap-3 text-xs text-gray-600 mt-1">
                                         <span>К:{(item.baseCPFC.calories * item.weight / 100).toFixed(0)}</span>
                                         <span>Б:{(item.baseCPFC.protein * item.weight / 100).toFixed(1)}</span>
                                         <span>Ж:{(item.baseCPFC.fat * item.weight / 100).toFixed(1)}</span>
@@ -109,60 +138,93 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
                                         <span>Кл:{(item.baseCPFC.fiber * item.weight / 100).toFixed(1)}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                    <input type="number" value={item.weight} onChange={(e) => onUpdateWeight(item.id, parseInt(e.target.value, 10))} className="w-20 p-1 sm:p-2 border border-slate-300 rounded text-center text-base" min="0" />
-                                    <span className="text-slate-500 text-sm">г</span>
-                                    <button onClick={() => onRemove(item.id)} className="text-slate-400 hover:text-red-600 p-1 rounded transition-colors ml-1"><TrashIcon /></button>
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
+                                        <input 
+                                            type="number" 
+                                            value={item.weight} 
+                                            onChange={(e) => onUpdateWeight(item.id, parseInt(e.target.value, 10))} 
+                                            className="bg-transparent text-center w-16 sm:w-20 focus:outline-none text-base sm:text-lg text-gray-900"
+                                            min="0" 
+                                        />
+                                        <span className="text-gray-600 text-sm">г</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => onRemove(item.id)} 
+                                        className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                        aria-label="Удалить ингредиент"
+                                    >
+                                        <TrashIcon />
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     ))
                 )}
             </div>
-            {ingredients.length > 0 && <div className="border-t pt-2 sm:pt-3 w-full">
-                <h3 className="text-lg font-bold mb-2 break-words">Итого на блюдо:</h3>
-                <div className="grid grid-cols-3 gap-2 w-full">
-                    <NutritionLabel label="Калории" value={totals.calories} unit="ккал" color="bg-blue-100 text-blue-800" precision={0} />
-                    <NutritionLabel label="Белки" value={totals.protein} unit="г" color="bg-green-100 text-green-800" />
-                    <NutritionLabel label="Жиры" value={totals.fat} unit="г" color="bg-orange-100 text-orange-800" />
-                    <NutritionLabel label="Углеводы" value={totals.carbohydrate} unit="г" color="bg-purple-100 text-purple-800" />
-                    <NutritionLabel label="Клетчатка" value={totals.fiber} unit="г" color="bg-cyan-100 text-cyan-800" />
-                    <NutritionLabel label="Общий вес" value={totals.weight} unit="г" color="bg-slate-100 text-slate-800" precision={0} />
-                </div>
-                 <div className="mt-4">
-                    <h3 className="text-base font-bold mb-2">Сохранить как:</h3>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <select value={mealType} onChange={e => setMealType(e.target.value)} className="flex-1 p-2 border border-slate-300 rounded-md bg-white text-base">
-                            <option value="breakfast">Завтрак</option>
-                            <option value="lunch">Обед</option>
-                            <option value="dinner">Ужин</option>
-                            <option value="snack">Перекус</option>
-                        </select>
-                        <button onClick={handleSaveToLibrary} className="flex items-center justify-center gap-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition text-base" title="Сохранить в справочник">
-                            <BookmarkIcon /> В справочник
-                        </button>
-                        <button onClick={handleSave} className="flex items-center justify-center gap-1 bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition text-base">
-                            <SaveIcon /> Сохранить
-                        </button>
+
+            {ingredients.length > 0 && (
+                <div className="space-y-4 border-t border-gray-200 pt-4">
+                    <div>
+                        <h3 className="text-base sm:text-lg font-semibold mb-3 text-gray-900">Итого на блюдо</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                            <NutritionLabel label="Калории" value={totals.calories} unit="ккал" color="blue" precision={0} />
+                            <NutritionLabel label="Белки" value={totals.protein} unit="г" color="green" />
+                            <NutritionLabel label="Жиры" value={totals.fat} unit="г" color="orange" />
+                            <NutritionLabel label="Углеводы" value={totals.carbohydrate} unit="г" color="purple" />
+                            <NutritionLabel label="Клетчатка" value={totals.fiber} unit="г" color="cyan" />
+                            <NutritionLabel label="Вес" value={totals.weight} unit="г" color="slate" precision={0} />
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-4 space-y-3 bg-gray-50">
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900">Сохранить как</h3>
+                        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
+                            <select 
+                                value={mealType} 
+                                onChange={e => setMealType(e.target.value)} 
+                                className="glow-input flex-1"
+                            >
+                                <option value="breakfast">Завтрак</option>
+                                <option value="lunch">Обед</option>
+                                <option value="dinner">Ужин</option>
+                                <option value="snack">Перекус</option>
+                            </select>
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-1">
+                                <button 
+                                    onClick={handleSaveToLibrary} 
+                                    className="mono-button flex-1 flex items-center justify-center gap-2 text-sm"
+                                    title="Сохранить в справочник"
+                                >
+                                    <BookmarkIcon /> В справочник
+                                </button>
+                                <button 
+                                    onClick={handleSave} 
+                                    className="mono-button primary-cta flex-1 flex items-center justify-center gap-2 text-sm"
+                                >
+                                    <SaveIcon /> Внести в день
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>}
+            )}
             
             {isNamingModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">Название блюда</h3>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="glass-panel p-5 sm:p-6 w-full max-w-md space-y-4">
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Название блюда</h3>
                         <input
                             type="text"
                             value={dishName}
                             onChange={(e) => setDishName(e.target.value)}
                             placeholder="Например, Овощной салат"
-                            className="w-full p-2 border border-slate-300 rounded-md mb-4"
+                            className="glow-input w-full"
                             autoFocus
                             onKeyDown={(e) => e.key === 'Enter' && handleConfirmSaveToLibrary()}
                         />
                         {saveError && (
-                            <p className="text-red-600 text-sm mb-4">{saveError}</p>
+                            <p className="text-sm text-red-600">{saveError}</p>
                         )}
                         <div className="flex gap-2 justify-end">
                             <button
@@ -171,13 +233,13 @@ const DishBuilder = ({ ingredients, totals, onUpdateWeight, onRemove, onClear, o
                                     setDishName('');
                                     setSaveError(null);
                                 }}
-                                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md transition"
+                                className="mono-button"
                             >
                                 Отмена
                             </button>
                             <button
                                 onClick={handleConfirmSaveToLibrary}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                                className="mono-button primary-cta"
                             >
                                 Сохранить
                             </button>

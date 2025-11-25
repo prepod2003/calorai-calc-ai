@@ -50,32 +50,31 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
     };
 
     return (
-        <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg shadow-md w-full">
-            <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-2 break-words">Поиск по справочнику</h2>
+        <div className="glass-panel p-4 sm:p-5 space-y-4 w-full animate-fade-up">
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Поиск по справочнику</h2>
+                <span className="chip text-xs">Library</span>
+            </div>
             <div className="relative w-full">
-                <div className="flex w-full">
-                    <input 
-                        type="text" 
-                        value={query} 
-                        onChange={(e) => setQuery(e.target.value)} 
-                        placeholder="Начните вводить название блюда..." 
-                        className="flex-grow w-full min-w-0 p-2 text-base border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition" 
-                    />
-                    <div className="absolute right-2 top-2 text-slate-400">
-                        <SearchIcon />
-                    </div>
-                </div>
+                <input 
+                    type="text" 
+                    value={query} 
+                    onChange={(e) => setQuery(e.target.value)} 
+                    placeholder="Начните вводить «Смузи», «Лосось» или любое блюдо..." 
+                    className="glow-input w-full min-w-0 pr-10"
+                />
+                <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 
                 {searchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    <div className="absolute z-20 w-full mt-2 glass-panel max-h-60 overflow-y-auto scrollbar-sleek p-1 shadow-lg border border-gray-200">
                         {searchResults.map(dish => (
                             <button
                                 key={dish.id}
                                 onClick={() => handleSelectDish(dish)}
-                                className="w-full text-left p-3 hover:bg-blue-50 transition-colors border-b border-slate-200 last:border-b-0"
+                                className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                             >
-                                <h3 className="font-semibold text-sm capitalize">{dish.name}</h3>
-                                <div className="flex gap-3 text-xs text-slate-600 mt-1">
+                                <h3 className="font-semibold text-sm capitalize text-gray-900">{dish.name}</h3>
+                                <div className="flex flex-wrap gap-3 text-xs text-gray-600 mt-1">
                                     <span>К:{dish.per100g.calories}</span>
                                     <span>Б:{dish.per100g.protein}</span>
                                     <span>Ж:{dish.per100g.fat}</span>
@@ -89,65 +88,51 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
             </div>
             
             {query && searchResults.length === 0 && (
-                <p className="text-slate-500 text-sm mt-2">
-                    Блюд не найдено. Добавьте блюдо в справочник или измените запрос.
+                <p className="text-sm text-gray-600">
+                    Блюд не найдено. Сохраните блюдо в конструкторе или уточните поисковый запрос.
                 </p>
             )}
 
             {isWeightModalOpen && selectedDish && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-2">{selectedDish.name}</h3>
-                        <p className="text-sm text-slate-600 mb-4">Укажите вес порции:</p>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="glass-panel w-full max-w-md space-y-4 p-5">
+                        <h3 className="text-lg font-semibold text-gray-900">{selectedDish.name}</h3>
+                        <p className="text-sm text-gray-600">Укажите вес порции:</p>
                         
-                        <div className="flex items-center gap-2 mb-4">
+                        <div className="flex items-center gap-3">
                             <input
                                 type="number"
                                 value={portionWeight}
                                 onChange={(e) => setPortionWeight(e.target.value)}
                                 placeholder="Вес"
-                                className="flex-1 p-2 border border-slate-300 rounded-md text-center text-lg"
+                                className="glow-input flex-1 text-center text-lg"
                                 autoFocus
                                 min="1"
                                 step="1"
                                 onKeyDown={(e) => e.key === 'Enter' && handleAddWithWeight()}
                             />
-                            <span className="text-slate-600 font-medium">грамм</span>
+                            <span className="text-gray-600 font-medium">грамм</span>
                         </div>
 
-                        <div className="bg-slate-50 p-3 rounded-md mb-4">
-                            <p className="text-xs text-slate-500 mb-2">КБЖУК для {portionWeight || 0}г:</p>
-                            <div className="grid grid-cols-5 gap-1 text-center text-xs">
-                                <div>
-                                    <p className="text-slate-500">Кал</p>
-                                    <p className="font-bold text-blue-600">
-                                        {Math.round((selectedDish.per100g.calories * (parseFloat(portionWeight) || 0)) / 100)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-slate-500">Б</p>
-                                    <p className="font-bold text-green-600">
-                                        {((selectedDish.per100g.protein * (parseFloat(portionWeight) || 0)) / 100).toFixed(1)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-slate-500">Ж</p>
-                                    <p className="font-bold text-orange-600">
-                                        {((selectedDish.per100g.fat * (parseFloat(portionWeight) || 0)) / 100).toFixed(1)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-slate-500">У</p>
-                                    <p className="font-bold text-purple-600">
-                                        {((selectedDish.per100g.carbohydrate * (parseFloat(portionWeight) || 0)) / 100).toFixed(1)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-slate-500">Кл</p>
-                                    <p className="font-bold text-cyan-600">
-                                        {((selectedDish.per100g.fiber * (parseFloat(portionWeight) || 0)) / 100).toFixed(1)}
-                                    </p>
-                                </div>
+                        <div className="glass-panel p-3 bg-gray-50">
+                            <p className="text-xs text-gray-500 mb-2">КБЖУК для {portionWeight || 0} г:</p>
+                            <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                                {(['Кал', 'Б', 'Ж', 'У', 'Кл'] as const).map((label, idx) => {
+                                    const weightValue = parseFloat(portionWeight) || 0;
+                                    const nutrientMap = [
+                                        Math.round((selectedDish.per100g.calories * weightValue) / 100),
+                                        ((selectedDish.per100g.protein * weightValue) / 100).toFixed(1),
+                                        ((selectedDish.per100g.fat * weightValue) / 100).toFixed(1),
+                                        ((selectedDish.per100g.carbohydrate * weightValue) / 100).toFixed(1),
+                                        ((selectedDish.per100g.fiber * weightValue) / 100).toFixed(1),
+                                    ];
+                                    return (
+                                        <div key={label} className="bg-white rounded-lg p-2 border border-gray-200">
+                                            <p className="text-gray-500">{label}</p>
+                                            <p className="font-semibold text-base text-gray-900">{nutrientMap[idx]}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -158,13 +143,13 @@ const IngredientSearch = ({ onAddIngredient, savedDishes }: IngredientSearchProp
                                     setSelectedDish(null);
                                     setPortionWeight('');
                                 }}
-                                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md transition"
+                                className="mono-button"
                             >
                                 Отмена
                             </button>
                             <button
                                 onClick={handleAddWithWeight}
-                                className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                                className="mono-button primary-cta flex items-center gap-2"
                                 disabled={!portionWeight || parseFloat(portionWeight) <= 0}
                             >
                                 <PlusCircleIcon /> Добавить

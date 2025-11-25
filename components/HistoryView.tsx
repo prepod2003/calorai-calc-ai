@@ -27,41 +27,41 @@ const NutritionLabel = ({
     
     // Статические маппинги цветов для Tailwind
     const colorMap = {
-        blue: { bg: 'bg-blue-50', bar: 'bg-blue-400', text: 'text-blue-700' },
-        green: { bg: 'bg-green-50', bar: 'bg-green-400', text: 'text-green-700' },
-        orange: { bg: 'bg-orange-50', bar: 'bg-orange-400', text: 'text-orange-700' },
-        purple: { bg: 'bg-purple-50', bar: 'bg-purple-400', text: 'text-purple-700' },
-        cyan: { bg: 'bg-cyan-50', bar: 'bg-cyan-400', text: 'text-cyan-700' },
-        slate: { bg: 'bg-slate-50', bar: 'bg-slate-400', text: 'text-slate-700' }
+        blue: { bg: 'bg-blue-50', bar: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-200' },
+        green: { bg: 'bg-emerald-50', bar: 'bg-emerald-500', text: 'text-emerald-700', border: 'border-emerald-200' },
+        orange: { bg: 'bg-orange-50', bar: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-200' },
+        purple: { bg: 'bg-purple-50', bar: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-200' },
+        cyan: { bg: 'bg-cyan-50', bar: 'bg-cyan-500', text: 'text-cyan-700', border: 'border-cyan-200' },
+        slate: { bg: 'bg-gray-50', bar: 'bg-gray-500', text: 'text-gray-700', border: 'border-gray-200' }
     };
     
     const colors = colorMap[baseColor as keyof typeof colorMap] || colorMap.slate;
-    const progressBgColor = isOverLimit ? 'bg-red-100' : colors.bg;
+    const progressBgColor = isOverLimit ? 'bg-red-100' : 'bg-gray-200';
     const progressBarColor = isOverLimit ? 'bg-red-500' : colors.bar;
     const progressTextColor = isOverLimit ? 'text-white font-bold' : `${colors.text} font-semibold`;
     const displayPercentage = Math.min(percentage || 0, 100);
     
     return (
         <div className="w-full">
-            <div className={`p-1.5 sm:p-2 lg:p-3 rounded-md text-center ${color}`}>
-                <p className="text-xs sm:text-sm font-medium opacity-80 break-words">{label}</p>
-                <p className="text-sm sm:text-base font-bold break-words">
-                    {value.toFixed(precision)} <span className="text-xs font-normal">{unit}</span>
+            <div className={`p-3 rounded-lg border ${colors.border} ${colors.bg}`}>
+                <p className="text-xs text-gray-600 break-words mb-1">{label}</p>
+                <p className={`text-lg font-bold break-words ${colors.text} mt-1`}>
+                    {value.toFixed(precision)} <span className="text-sm font-normal text-gray-500">{unit}</span>
                 </p>
             </div>
             {percentage !== undefined && goal !== undefined && (
-                <div className="mt-1 px-1">
-                    <div className={`relative h-6 ${progressBgColor} rounded-full overflow-hidden`}>
+                <div className="mt-2 px-1">
+                    <div className={`relative h-6 ${progressBgColor} rounded-full overflow-hidden border border-gray-300`}>
                         <div 
                             className={`h-full ${progressBarColor} transition-all duration-300 flex items-center justify-center`}
                             style={{ width: `${displayPercentage}%` }}
                         >
-                            <span className={`text-sm sm:text-base ${progressTextColor} font-bold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
+                            <span className={`text-xs sm:text-sm ${progressTextColor} font-bold absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap`}>
                                 {percentage}%
                             </span>
                         </div>
                     </div>
-                    <p className="text-sm sm:text-base text-slate-500 text-center mt-1">
+                    <p className="text-xs sm:text-sm text-gray-600 text-center mt-1">
                         из {goal.toFixed(precision)} {unit}
                     </p>
                 </div>
@@ -155,50 +155,50 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
 
     if (Object.keys(history).length === 0) {
         return (
-            <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-md w-full text-center">
-                <h2 className="text-lg font-semibold text-slate-700">История пуста</h2>
-                <p className="text-slate-500 mt-2 text-sm">Сохраненные блюда появятся здесь.</p>
+            <div className="glass-panel p-6 text-center animate-fade-up">
+                <h2 className="text-2xl font-semibold text-gray-900">История пуста</h2>
+                <p className="text-gray-600 mt-2 text-sm">Сохраненные блюда появятся здесь.</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-4 w-full">
+        <div className="space-y-6 w-full">
             {/* Панель фильтров и экспорта */}
-            <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
+            <div className="glass-panel p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-3">
-                    <h2 className="text-lg font-bold">Фильтры и экспорт</h2>
+                    <h2 className="text-xl font-semibold">Фильтры и экспорт</h2>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
+                        className="text-sm text-indigo-600 hover:text-indigo-700 transition-colors"
                     >
                         {showFilters ? 'Скрыть' : 'Показать'}
                     </button>
                 </div>
 
                 {showFilters && (
-                    <div className="space-y-3 animate-fade-in">
+                    <div className="space-y-4 animate-fade-in">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Дата начала
                                 </label>
                                 <input
                                     type="date"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full p-2 text-base border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                                    className="glow-input w-full bg-transparent"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Дата окончания
                                 </label>
                                 <input
                                     type="date"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full p-2 text-base border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500"
+                                    className="glow-input w-full bg-transparent"
                                 />
                             </div>
                         </div>
@@ -206,27 +206,27 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                         {(startDate || endDate) && (
                             <button
                                 onClick={handleClearFilters}
-                                className="text-sm text-slate-600 hover:text-slate-800 font-semibold"
+                                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                             >
                                 Сбросить фильтры
                             </button>
                         )}
 
-                        <div className="border-t pt-3">
-                            <p className="text-sm font-medium text-slate-700 mb-2">
+                        <div className="border-t border-gray-200 pt-4">
+                            <p className="text-sm font-medium text-gray-900 mb-2">
                                 Экспорт данных
                                 {(startDate || endDate) && ' (за выбранный период)'}
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={handleExportCSV}
-                                    className="flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition text-sm"
+                                    className="mono-button flex-1"
                                 >
                                     Экспорт в CSV
                                 </button>
                                 <button
                                     onClick={handleExportJSON}
-                                    className="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition text-sm"
+                                    className="mono-button primary-cta flex-1"
                                 >
                                     Экспорт в JSON
                                 </button>
@@ -238,8 +238,8 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
 
             {/* Список дней */}
             {filteredDates.length === 0 ? (
-                <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md text-center">
-                    <p className="text-slate-500">Нет данных за выбранный период</p>
+                <div className="glass-panel p-6 text-center">
+                    <p className="text-gray-600">Нет данных за выбранный период</p>
                 </div>
             ) : (
                 filteredDates.map(date => {
@@ -257,29 +257,29 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                     });
                     
                     return (
-                        <div key={date} className="bg-white p-3 sm:p-4 rounded-lg shadow-md animate-fade-in">
-                            <div className="flex justify-between items-center mb-3 border-b pb-3">
-                                <h2 className="text-lg sm:text-xl font-bold">
+                        <div key={date} className="glass-panel p-4 sm:p-6 space-y-4 animate-fade-up">
+                            <div className="flex justify-between items-center gap-3 border-b border-gray-200 pb-3">
+                                <h2 className="text-xl font-semibold">
                                     {formatDate(date)}
                                 </h2>
                                 <div className="flex gap-2">
                                     <button 
                                         onClick={() => handleAnalyzeDay(date)} 
-                                        className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                                        className="mono-button px-4 py-2 flex items-center gap-2 text-sm"
                                         title="Анализ рациона с помощью AI"
                                     >
-                                        <SparklesIcon />
+                                        <SparklesIcon /> AI анализ
                                     </button>
                                     <button 
                                         onClick={() => onClearDay(date)} 
-                                        className="text-red-500 hover:text-red-700 text-xs font-semibold"
+                                        className="text-red-300 hover:text-red-200 text-sm font-semibold"
                                     >
                                         Очистить день
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-2 mb-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 <NutritionLabel 
                                     label="Калории" 
                                     value={totals.calories} 
@@ -321,25 +321,23 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                                     percentage={progress?.fiber}
                                     goal={goals?.fiber}
                                 />
-                                <NutritionLabel 
-                                    label="Общий вес" 
-                                    value={totals.weight} 
-                                    unit="г" 
-                                    color="bg-slate-100 text-slate-800" 
-                                    precision={0} 
-                                />
+                                <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+                                    <p className="text-xs text-gray-600">Общий вес</p>
+                                    <p className="text-xl font-semibold mt-1 text-gray-900">{totals.weight.toFixed(0)} <span className="text-sm text-gray-600">г</span></p>
+                                </div>
                             </div>
                             
                             <div className="space-y-3">
                                 {Object.entries(dayData.meals).map(([mealId, meal]: [string, any]) => (
-                                    <div key={mealId} className="bg-slate-50 p-2 sm:p-3 rounded-md">
+                                    <div key={mealId} className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
                                         <div className="flex justify-between items-center mb-2">
-                                            <h3 className="font-bold text-base capitalize">
+                                            <h3 className="font-bold text-base capitalize flex items-center gap-2">
                                                 {getMealTypeLabel(meal.type)}
+                                                <span className="chip text-xs capitalize">{meal.type}</span>
                                             </h3>
                                             <button 
                                                 onClick={() => onRemoveMeal(date, mealId)} 
-                                                className="p-1 text-slate-400 hover:text-red-600"
+                                                className="p-1 text-gray-400 hover:text-red-600"
                                             >
                                                 <TrashIcon />
                                             </button>
@@ -348,7 +346,7 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
                                             {meal.ingredients.map((ing: any) => (
                                                 <li 
                                                     key={ing.id} 
-                                                    className="border-t border-slate-200 pt-2 mt-2 first:border-t-0 first:pt-0 first:mt-0"
+                                                    className="border-t border-gray-200 pt-2 mt-2 first:border-t-0 first:pt-0 first:mt-0"
                                                 >
                                                     <div className="flex justify-between items-center">
                                                         <span className="font-semibold capitalize break-words">
@@ -378,37 +376,35 @@ const HistoryView = ({ history, onRemoveMeal, onClearDay, config, userProfile }:
 
             {/* Модальное окно с AI-анализом */}
             {analyzingDate && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex justify-between items-center">
-                            <h2 className="text-xl font-bold">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="glass-panel w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900">
                                 Анализ рациона за {formatDate(analyzingDate)}
                             </h2>
-                            <button onClick={handleCloseAnalysis} className="text-slate-500 hover:text-slate-700">
+                            <button onClick={handleCloseAnalysis} className="text-gray-500 hover:text-gray-700">
                                 <CloseIcon />
                             </button>
                         </div>
 
-                        <div className="p-4 sm:p-6">
+                        <div className="p-4 sm:p-6 space-y-4">
                             {isAnalyzing && (
                                 <div className="flex items-center justify-center py-8">
-                                    <SpinnerIcon className="animate-spin h-8 w-8 text-blue-600" />
-                                    <span className="ml-3 text-slate-600">Анализирую ваш рацион...</span>
+                                    <SpinnerIcon className="animate-spin h-8 w-8 text-cyan-400" />
+                                    <span className="ml-3 text-gray-600">Анализирую ваш рацион...</span>
                                 </div>
                             )}
 
                             {analysisError && (
-                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                    <p className="text-red-600 font-semibold mb-2">Ошибка анализа</p>
-                                    <p className="text-red-700 text-sm">{analysisError}</p>
+                                <div className="bg-red-500/10 border border-red-400/40 rounded-2xl p-4">
+                                    <p className="text-red-200 font-semibold mb-2">Ошибка анализа</p>
+                                    <p className="text-red-100 text-sm">{analysisError}</p>
                                 </div>
                             )}
 
                             {analysisResult && (
-                                <div className="prose prose-sm max-w-none">
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 whitespace-pre-wrap">
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
                                         {analysisResult}
-                                    </div>
                                 </div>
                             )}
                         </div>

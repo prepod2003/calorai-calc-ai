@@ -64,42 +64,51 @@ const MealAnalyzer = ({ onAnalysisComplete, config, calculatePer100g, onCalculat
     };
 
     return (
-        <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg shadow-md w-full">
-            <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-2 break-words">Анализ блюда</h2>
+        <div className="glass-panel p-4 sm:p-5 space-y-4 w-full animate-fade-up">
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Анализ блюда</h2>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">Опишите блюдо или загрузите фото — AI заполнит КБЖУ.</p>
+                </div>
+                <span className="chip">AI</span>
+            </div>
             
             <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Опишите блюдо для анализа или добавьте подсказку к фото."
-                className="w-full p-2 text-base border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 transition resize-none mb-2"
+                placeholder="Например: «Боул с киноа, авокадо и лососем»"
+                className="glow-input w-full min-h-[100px] sm:min-h-[120px] resize-none"
                 rows={3}
                 disabled={isLoading}
             />
             
-            <div className="flex items-center my-2">
-                <input
-                    type="checkbox"
-                    id="calculatePer100g"
-                    checked={calculatePer100g}
-                    onChange={(e) => onCalculatePer100gChange(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                    disabled={isLoading}
-                />
-                <label htmlFor="calculatePer100g" className="ml-2 block text-sm text-slate-700">
-                    Расчёт на 100 г (игнорировать вес)
-                </label>
-            </div>
+            <label className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
+                <div className={`relative w-10 h-5 rounded-full transition-colors ${calculatePer100g ? 'bg-indigo-500' : 'bg-gray-300'}`}>
+                    <input
+                        type="checkbox"
+                        id="calculatePer100g"
+                        checked={calculatePer100g}
+                        onChange={(e) => onCalculatePer100gChange(e.target.checked)}
+                        className="sr-only"
+                        disabled={isLoading}
+                    />
+                    <span className={`absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${calculatePer100g ? 'translate-x-5' : ''}`} />
+                </div>
+                Расчёт на 100 г (игнорировать вес)
+            </label>
 
             {image && (
-                <div className="space-y-2 animate-fade-in mb-2">
-                    <img 
-                        src={image.previewUrl} 
-                        alt="Превью блюда" 
-                        className="w-full max-h-40 object-contain rounded-md border" 
-                    />
+                <div className="space-y-3 animate-fade-in">
+                    <div className="rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                        <img 
+                            src={image.previewUrl} 
+                            alt="Превью блюда" 
+                            className="w-full max-h-48 object-cover" 
+                        />
+                    </div>
                     <button 
                         onClick={handleClearImage} 
-                        className="w-full bg-slate-200 text-slate-800 font-bold py-2 px-4 rounded-md hover:bg-slate-300 transition text-sm"
+                        className="mono-button w-full"
                     >
                         Убрать фото
                     </button>
@@ -115,27 +124,27 @@ const MealAnalyzer = ({ onAnalysisComplete, config, calculatePer100g, onCalculat
                 aria-hidden="true" 
             />
             
-            <div className="flex flex-col sm:flex-row gap-2 mt-2">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button 
                     onClick={handleFileSelect} 
                     disabled={isLoading} 
-                    className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-md transition border-2 border-dashed border-slate-300 disabled:bg-slate-400 text-sm"
+                    className="mono-button w-full sm:w-auto flex items-center justify-center gap-2 border-dashed border-2"
                 >
                     <PhotoIcon />
-                    <span>{image ? 'Изменить фото' : 'Загрузить фото'}</span>
+                    <span className="text-sm">{image ? 'Изменить фото' : 'Загрузить фото'}</span>
                 </button>
                 <button 
                     onClick={handleAnalyze} 
                     disabled={isLoading || (!image && !text.trim())} 
-                    className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-slate-400 transition text-sm"
+                    className="mono-button primary-cta w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? <SpinnerIcon /> : null}
-                    <span>Проанализировать</span>
+                    <span className="text-sm">Проанализировать</span>
                 </button>
             </div>
 
             {error && (
-                <p className="text-red-600 bg-red-100 p-2 sm:p-3 rounded-lg text-xs sm:text-sm mt-2">
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
                     {error}
                 </p>
             )}

@@ -25,16 +25,13 @@ const MainTabButton = ({
 }) => (
     <button 
         onClick={onClick} 
-        className={`relative flex-1 py-3 px-1 text-sm sm:text-base font-bold text-center transition-colors ${
-            isActive ? 'text-blue-600' : 'text-slate-500 hover:bg-slate-100'
+        className={`tab-pill flex-1 flex items-center justify-center gap-2 ${
+            isActive ? 'tab-pill-active' : ''
         }`}
     >
-        {children}
-        <span className={`absolute bottom-0 left-0 right-0 h-1 transition-transform ${
-            isActive ? 'bg-blue-600' : 'bg-transparent'
-        }`} />
+        <span className="text-sm sm:text-base">{children}</span>
         {badge > 0 && (
-            <span className="absolute top-1 right-2 ml-2 bg-blue-100 text-blue-800 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-white/30 text-white' : 'bg-gray-200 text-gray-700'}`}>
                 {badge}
             </span>
         )}
@@ -51,6 +48,8 @@ const App = () => {
     const [userProfile, setUserProfile] = useState<UserProfileType | null>(null);
     const [activeView, setActiveView] = useState<'builder' | 'history' | 'dishes'>('builder');
     const [calculatePer100g, setCalculatePer100g] = useState(false);
+
+    const todayKey = useMemo(() => new Date().toISOString().split('T')[0], []);
 
     const loadDishes = () => {
         setSavedDishes(loadSavedDishes());
@@ -226,6 +225,37 @@ const App = () => {
 
     const memoizedTotals = useMemo(() => calculateTotals(dishIngredients), [dishIngredients]);
 
+    const todayEntry = history[todayKey];
+    const heroStats = useMemo(() => {
+        const targetCalories = userProfile?.dailyGoals?.targetCalories;
+        const todayCalories = todayEntry?.dailyTotals?.calories ?? 0;
+        const todayMeals = todayEntry ? Object.keys(todayEntry.meals).length : 0;
+        return [
+            {
+                label: 'Сегодня потреблено',
+                value: `${Math.round(todayCalories)} ккал`,
+                helper: todayMeals > 0 ? `${todayMeals} прием(а) пищи` : 'Добавьте прием пищи',
+            },
+            {
+                label: 'Цель на день',
+                value: targetCalories ? `${Math.round(targetCalories)} ккал` : 'Не задана',
+                helper: targetCalories ? 'Контролируйте прогресс' : 'Заполните профиль',
+            },
+            {
+                label: 'Блюд в библиотеке',
+                value: savedDishes.length.toString(),
+                helper: 'Готовые пресеты',
+            },
+        ];
+    }, [todayEntry, userProfile, savedDishes]);
+
+    const currentDishStats = useMemo(() => ([
+        { label: 'Калории', value: `${Math.round(memoizedTotals.calories)} ккал` },
+        { label: 'Белки', value: `${memoizedTotals.protein.toFixed(1)} г` },
+        { label: 'Жиры', value: `${memoizedTotals.fat.toFixed(1)} г` },
+        { label: 'Углеводы', value: `${memoizedTotals.carbohydrate.toFixed(1)} г` },
+    ]), [memoizedTotals]);
+
     const isReady = !!config && !!config.providers[config.currentProviderId];
 
     const handleSaveProfile = (profile: UserProfileType) => {
@@ -233,8 +263,10 @@ const App = () => {
         setUserProfile(profile);
     };
 
+    const hasProfile = Boolean(userProfile?.name);
+
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-800 font-sans">
+        <div className="app-shell">
             <ApiKeyManager
                 config={config}
                 setConfig={setConfig}
@@ -252,102 +284,130 @@ const App = () => {
                 />
             )}
             
-            <header className="bg-white shadow-md w-full sticky top-0 z-10">
-                <div className="px-2 sm:px-4 lg:px-8 py-2 flex justify-between items-center">
-                    <h1 className="text-xl lg:text-2xl font-bold text-slate-900">Калькулятор КБЖУ</h1>
+            <header className="sticky top-0 z-20 px-2 sm:px-4 lg:px-8 py-3">
+                <div className="glass-panel px-4 sm:px-6 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p className="floating-badge uppercase tracking-[0.3em] text-[10px] sm:text-xs">Nutrition</p>
+                        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1 text-gray-900">Калькулятор КБЖУ</h1>
+                        <p className="text-sm text-gray-600 mt-1">
+                            {hasProfile ? `${userProfile?.name}, держим курс на цель.`
+                                : 'Настройте профиль, чтобы получить персональные рекомендации.'}
+                        </p>
+                    </div>
                     {isReady && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 sm:justify-end">
                             <button 
                                 onClick={() => setIsProfileModalOpen(true)} 
-                                className="text-slate-500 hover:text-blue-600 p-2 rounded-full hover:bg-slate-100 transition-colors" 
-                                aria-label="Профиль"
+                                className="mono-button"
                             >
-                                <svg 
-                                    xmlns="http://www.w3.org/2000/svg" 
-                                    className="h-6 w-6" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor" 
-                                    strokeWidth={2}
-                                >
-                                    <path 
-                                        strokeLinecap="round" 
-                                        strokeLinejoin="round" 
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
-                                    />
-                                </svg>
+                                Профиль
                             </button>
                             <button 
                                 onClick={() => setIsApiModalOpen(true)} 
-                                className="text-slate-500 hover:text-blue-600 p-2 rounded-full hover:bg-slate-100 transition-colors" 
-                                aria-label="Настройки"
+                                className="mono-button primary-cta"
                             >
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                className="h-6 w-6" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                stroke="currentColor" 
-                                strokeWidth={2}
-                            >
-                                <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" 
-                                />
-                                <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" 
-                                />
-                            </svg>
+                                Модели и токен
                             </button>
                         </div>
                     )}
                 </div>
-                {isReady && (
-                    <div className="flex border-t border-slate-200">
-                        <MainTabButton 
-                            isActive={activeView === 'builder'} 
-                            onClick={() => setActiveView('builder')} 
-                            badge={dishIngredients.length}
-                        >
-                            Конструктор
-                        </MainTabButton>
-                        <MainTabButton 
-                            isActive={activeView === 'history'} 
-                            onClick={() => setActiveView('history')}
-                        >
-                            История
-                        </MainTabButton>
-                        <MainTabButton 
-                            isActive={activeView === 'dishes'} 
-                            onClick={() => setActiveView('dishes')}
-                            badge={savedDishes.length}
-                        >
-                            Мои блюда
-                        </MainTabButton>
-                    </div>
-                )}
             </header>
             
             {isReady ? (
-                <main className="w-full mt-2 sm:mt-4 animate-fade-in pb-4">
-                    <div className="px-2 sm:px-4 lg:px-8">
-                        {activeView === 'builder' && (
-                            <div className="grid lg:grid-cols-2 lg:gap-4 lg:items-start space-y-4 lg:space-y-0">
-                                <div className="space-y-4">
-                                    <MealAnalyzer
-                                        onAnalysisComplete={handleAnalysisComplete}
-                                        config={config}
-                                        calculatePer100g={calculatePer100g}
-                                        onCalculatePer100gChange={handleCalculatePer100gChange}
-                                    />
-                                    <IngredientSearch 
-                                        onAddIngredient={handleAddIngredient} 
-                                        savedDishes={savedDishes}
-                                    />
+                <main className="px-2 sm:px-4 lg:px-8 pb-10 space-y-6 animate-fade-up">
+                    <section className="hero-section relative overflow-hidden">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-8">
+                            <div className="flex-1">
+                                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 font-medium">Баланс питания</p>
+                                <h2 className="text-2xl sm:text-3xl font-semibold mt-2 leading-tight text-gray-900">
+                                    {hasProfile ? 'Персональная панель питания' : 'Создайте свой nutritional hub'}
+                                </h2>
+                                <p className="text-gray-600 mt-2 max-w-2xl text-sm sm:text-base">
+                                    Следите за рационом, создавайте блюда и сравнивайте с дневными целями в одном месте.
+                                </p>
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    <button 
+                                        className="mono-button primary-cta"
+                                        onClick={() => setIsProfileModalOpen(true)}
+                                    >
+                                        Настроить профиль
+                                    </button>
+                                    <button 
+                                        className="mono-button"
+                                        onClick={() => setActiveView('history')}
+                                    >
+                                        Смотреть историю
+                                    </button>
                                 </div>
+                            </div>
+                            {dishIngredients.length > 0 && (
+                                <div className="glass-panel px-4 py-4 lg:w-96">
+                                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Текущее блюдо</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {currentDishStats.map(stat => (
+                                            <div key={stat.label} className="metric-pill text-left">
+                                                <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
+                                                <p className="text-base font-semibold text-gray-900">{stat.value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="hero-grid">
+                            {heroStats.map((stat) => (
+                                <div key={stat.label} className="metric-pill">
+                                    <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
+                                    <h3 className="text-xl font-semibold text-gray-900">{stat.value}</h3>
+                                    <p className="text-xs text-gray-600 mt-1">{stat.helper}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {isReady && (
+                        <div className="glass-panel px-3 sm:px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium hidden sm:block">Навигация</div>
+                            <div className="flex flex-col sm:flex-row gap-2 w-full">
+                                <MainTabButton 
+                                    isActive={activeView === 'builder'} 
+                                    onClick={() => setActiveView('builder')} 
+                                    badge={dishIngredients.length}
+                                >
+                                    Конструктор
+                                </MainTabButton>
+                                <MainTabButton 
+                                    isActive={activeView === 'history'} 
+                                    onClick={() => setActiveView('history')}
+                                >
+                                    История
+                                </MainTabButton>
+                                <MainTabButton 
+                                    isActive={activeView === 'dishes'} 
+                                    onClick={() => setActiveView('dishes')}
+                                    badge={savedDishes.length}
+                                >
+                                    Мои блюда
+                                </MainTabButton>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeView === 'builder' && (
+                        <div className="grid gap-6 lg:grid-cols-12">
+                            <div className="lg:col-span-5 space-y-6">
+                                <MealAnalyzer
+                                    onAnalysisComplete={handleAnalysisComplete}
+                                    config={config}
+                                    calculatePer100g={calculatePer100g}
+                                    onCalculatePer100gChange={handleCalculatePer100gChange}
+                                />
+                                <IngredientSearch 
+                                    onAddIngredient={handleAddIngredient} 
+                                    savedDishes={savedDishes}
+                                />
+                            </div>
+                            <div className="lg:col-span-7">
                                 <DishBuilder 
                                     ingredients={dishIngredients} 
                                     totals={memoizedTotals} 
@@ -358,46 +418,50 @@ const App = () => {
                                     onRefreshSavedDishes={loadDishes}
                                 />
                             </div>
-                        )}
-                        {activeView === 'dishes' && (
-                            <MyDishes
-                                dishes={savedDishes}
-                                onAddDish={(dish) => {
-                                    saveDishToLibrary({ ...dish, id: crypto.randomUUID() });
-                                    loadDishes();
-                                }}
-                                onUpdateDish={(id, dish) => {
-                                    updateDishInLibrary(id, { ...dish, id });
-                                    loadDishes();
-                                }}
-                                onDeleteDish={(id) => {
-                                    deleteDishFromLibrary(id);
-                                    loadDishes();
-                                }}
-                            />
-                        )}
-                        {activeView === 'history' && (
-                            <HistoryView 
-                                history={history} 
-                                onRemoveMeal={handleRemoveMeal} 
-                                onClearDay={handleClearDay}
-                                config={config}
-                                userProfile={userProfile}
-                            />
-                        )}
-                    </div>
+                        </div>
+                    )}
+
+                    {activeView === 'dishes' && (
+                        <MyDishes
+                            dishes={savedDishes}
+                            onAddDish={(dish) => {
+                                saveDishToLibrary({ ...dish, id: crypto.randomUUID() });
+                                loadDishes();
+                            }}
+                            onUpdateDish={(id, dish) => {
+                                updateDishInLibrary(id, { ...dish, id });
+                                loadDishes();
+                            }}
+                            onDeleteDish={(id) => {
+                                deleteDishFromLibrary(id);
+                                loadDishes();
+                            }}
+                        />
+                    )}
+
+                    {activeView === 'history' && (
+                        <HistoryView 
+                            history={history} 
+                            onRemoveMeal={handleRemoveMeal} 
+                            onClearDay={handleClearDay}
+                            config={config}
+                            userProfile={userProfile}
+                        />
+                    )}
                 </main>
             ) : (
-                <main className="w-full mt-2 text-center">
-                    <div className="px-2 sm:px-4 lg:px-8">
-                        <div className="bg-white p-6 rounded-lg shadow-md w-full">
-                            <h2 className="text-xl font-semibold text-slate-700">
-                                Ожидание конфигурации API...
-                            </h2>
-                            <p className="text-slate-500 mt-2">
-                                Пожалуйста, введите токен и выберите модель, чтобы начать.
-                            </p>
-                        </div>
+                <main className="px-2 sm:px-4 lg:px-8 pb-10">
+                    <div className="glass-panel px-6 py-8 text-center">
+                        <h2 className="text-2xl font-semibold mb-2 text-gray-900">Ожидание конфигурации API</h2>
+                        <p className="text-gray-600 mb-4">
+                            Подключите токен и модель, чтобы открыть весь функционал.
+                        </p>
+                        <button 
+                            onClick={() => setIsApiModalOpen(true)} 
+                            className="mono-button primary-cta"
+                        >
+                            Настроить сейчас
+                        </button>
                     </div>
                 </main>
             )}
